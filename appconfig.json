@@ -1,0 +1,16 @@
+{
+    "appName": "RS3 BuffTracker",
+    "description": "Combat buff/debuff tracker with customizable gauge overlay for Necromancy and all combat styles.",
+    "appUrl": "./index.html",
+    "configUrl": "./appconfig.json",
+    "iconUrl": "./icon.png",
+    "defaultWidth": 300,
+    "defaultHeight": 200,
+    "minWidth": 200,
+    "minHeight": 120,
+    "maxWidth": 800,
+    "maxHeight": 600,
+    "requestHandlers": [],
+    "activators": [],
+    "permissions": "pixel,overlay,gamestate"
+}

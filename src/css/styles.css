@@ -1,0 +1,1417 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 12px;
+    color: #e0e0e0;
+    background: transparent;
+    overflow: hidden;
+}
+
+/* --- App Shell --- */
+
+#app {
+    background: rgba(8, 6, 16, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-width: 220px;
+}
+
+#status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+#status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+#status-dot.ok { background: #22c55e; }
+#status-dot.warn { background: #f59e0b; }
+#status-dot.error { background: #ef4444; }
+#status-dot.info { background: #60a5fa; }
+
+#status-text {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* --- Panel Containers --- */
+
+.panel {
+    margin-bottom: 8px;
+}
+
+.panel:empty {
+    display: none;
+}
+
+/* --- Controls --- */
+
+#controls {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+#controls button {
+    flex: 1;
+    padding: 4px 6px;
+    font-size: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+#controls button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+#controls button:active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Gauge Header --- */
+
+.gauge-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.gauge-style-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gauge-style-icon {
+    font-size: 12px;
+}
+
+.gauge-style-name {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.gauge-header-spacer {
+    flex: 1;
+}
+
+.gauge-style-cycle {
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: background 0.15s;
+    padding: 0;
+}
+
+.gauge-style-cycle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- Timer Abilities --- */
+
+.gauge-ability {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    transition: opacity 0.2s;
+}
+
+.gauge-ability-cooldown {
+    animation: gauge-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes gauge-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.55; }
+}
+
+.gauge-ability-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+}
+
+.gauge-ability-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.gauge-ability-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gauge-ability-timer {
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    min-width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* --- Stack Abilities --- */
+
+.gauge-stacks-row {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.gauge-stack-group {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.03);
+    text-align: center;
+}
+
+.gauge-stack-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 4px;
+}
+
+.gauge-stack-bars {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+}
+
+.gauge-stack-bar {
+    width: 5px;
+    height: 14px;
+    border-radius: 2px;
+    transition: background 0.15s;
+}
+
+.gauge-stack-gap {
+    width: 3px;
+}
+
+.gauge-stack-count {
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    margin-top: 3px;
+}
+
+/* --- Toggle Abilities --- */
+
+.gauge-toggle-row {
+    display: flex;
+    gap: 4px;
+    margin: 6px 0;
+}
+
+.gauge-toggle {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.gauge-toggle-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.gauge-toggle-name {
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+/* --- Conjures --- */
+
+.gauge-section-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 6px 0;
+}
+
+.gauge-conjures-row {
+    display: flex;
+    gap: 4px;
+}
+
+.gauge-conjure {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+/* --- Style A: Compact (Horizontal Flow) --- */
+
+.compact-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.compact-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.compact-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.compact-pill-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+}
+
+.compact-pill-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 36px;
+}
+
+.compact-pill-name {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    line-height: 1.1;
+}
+
+.compact-pill-value {
+    font-size: 10px;
+    font-family: Consolas, 'SF Mono', monospace;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.compact-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+}
+
+.compact-conjures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.compact-conjure {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.compact-conjure-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.compact-conjure-name {
+    font-size: 9px;
+}
+
+/* --- Style B: Classic (Grid Icons) --- */
+
+.classic-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 5px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(100, 70, 140, 0.25);
+}
+
+.classic-header-name {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.classic-header-conjures {
+    display: flex;
+    gap: 4px;
+}
+
+.classic-conjure-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.classic-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.classic-cell {
+    text-align: center;
+    transition: opacity 0.2s;
+}
+
+.classic-icon {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(30, 20, 50, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.classic-icon-symbol {
+    font-size: 16px;
+}
+
+.classic-timer-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    font-size: 9px;
+    font-family: Consolas, 'SF Mono', monospace;
+    font-weight: 500;
+    color: #ffffff;
+    text-align: center;
+    line-height: 11px;
+    padding: 0 1px;
+}
+
+.classic-label {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.classic-stacks {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.classic-stack-bar {
+    flex: 1;
+}
+
+.classic-stack-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+}
+
+.classic-stack-bar-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.classic-stack-bar-count {
+    font-size: 10px;
+    font-family: Consolas, 'SF Mono', monospace;
+    font-weight: 500;
+}
+
+.classic-stack-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.classic-stack-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.classic-conjure-row {
+    display: flex;
+    gap: 4px;
+}
+
+.classic-conjure-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+}
+
+.classic-conjure-pill-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* --- Combat Buffs Panel --- */
+
+.buffs-header {
+    margin-bottom: 8px;
+}
+
+.buffs-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #fcd34d;
+}
+
+.buffs-empty {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.25);
+    text-align: center;
+    padding: 8px 0;
+}
+
+.buffs-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-bottom: 4px;
+}
+
+.buffs-entry-name {
+    flex: 1;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.buffs-entry-timer {
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    flex-shrink: 0;
+}
+
+/* Expired state */
+.buffs-entry-expired .buffs-entry-name {
+    color: #fca5a5;
+}
+
+.buffs-entry-expired .buffs-entry-timer {
+    color: #ef4444;
+}
+
+/* --- Debug Output --- */
+
+#debug-container {
+    display: none;
+}
+
+#debug-container.active {
+    display: block;
+}
+
+#debug-output {
+    max-height: 250px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 8px;
+    margin-top: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#debug-controls {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+#debug-controls button {
+    padding: 2px 8px;
+    font-size: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+}
+
+#debug-controls button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Hide legacy display divs (replaced by gauge) */
+#buff-display,
+#debuff-display {
+    display: none;
+}
+
+/* ===================================================================
+   Settings Panel
+   =================================================================== */
+
+#settings-view {
+    overflow: visible;
+}
+
+#settings-content {
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Scrollbar styling */
+#settings-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+#settings-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 2px;
+}
+
+#settings-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+}
+
+#settings-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* --- Sections --- */
+
+.settings-section {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.settings-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.settings-hint {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.25);
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+/* --- Overlay Style Cards --- */
+
+.settings-style-grid {
+    display: flex;
+    gap: 4px;
+}
+
+.settings-style-card {
+    flex: 1;
+    padding: 6px 4px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    position: relative;
+}
+
+.settings-style-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.settings-style-card.active {
+    background: rgba(129, 140, 248, 0.12);
+    border-color: rgba(129, 140, 248, 0.4);
+}
+
+.settings-style-card.disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.settings-style-card.disabled:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.settings-style-letter {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 2px;
+}
+
+.settings-style-card.active .settings-style-letter {
+    color: #a5b4fc;
+}
+
+.settings-style-name {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.settings-style-card.active .settings-style-name {
+    color: rgba(165, 180, 252, 0.7);
+}
+
+.settings-style-soon {
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.2);
+    margin-top: 1px;
+}
+
+/* --- Combat Style Buttons --- */
+
+.settings-combat-row {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 6px;
+}
+
+.settings-combat-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 5px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.settings-combat-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.settings-combat-icon {
+    font-size: 14px;
+}
+
+.settings-combat-label {
+    font-size: 9px;
+    font-weight: 500;
+}
+
+/* --- Checkbox Row --- */
+
+.settings-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    cursor: pointer;
+}
+
+.settings-checkbox {
+    width: 12px;
+    height: 12px;
+    accent-color: #818cf8;
+    cursor: pointer;
+}
+
+.settings-checkbox-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* --- Collapsible Sections --- */
+
+.settings-collapsible-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 3px 0;
+    margin-bottom: 4px;
+    user-select: none;
+}
+
+.settings-collapsible-header:hover .settings-section-title {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.settings-collapse-arrow {
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.3);
+    width: 10px;
+    flex-shrink: 0;
+}
+
+.settings-collapsible-header .settings-section-title {
+    margin-bottom: 0;
+}
+
+.settings-collapsible-body {
+    padding-left: 15px;
+}
+
+.settings-tier-badge {
+    font-size: 9px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.2);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.settings-subsection-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 6px;
+    margin-bottom: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* --- Ability Toggle Rows (Section 3) --- */
+
+.settings-ability-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+}
+
+.settings-ability-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.settings-ability-name {
+    flex: 1;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Toggle Switch (on/off) --- */
+
+.settings-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 28px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.settings-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.settings-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 7px;
+    transition: background 0.2s;
+}
+
+.settings-toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 10px;
+    width: 10px;
+    left: 2px;
+    bottom: 2px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.settings-toggle-switch input:checked + .settings-toggle-slider {
+    background: rgba(129, 140, 248, 0.35);
+}
+
+.settings-toggle-switch input:checked + .settings-toggle-slider::before {
+    transform: translateX(14px);
+    background: #a5b4fc;
+}
+
+/* --- Three-Way Toggle (Off/Mon/Track) --- */
+
+.settings-buff-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.settings-buff-name {
+    flex: 1;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.settings-three-way {
+    display: flex;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.settings-tw-btn {
+    padding: 2px 6px;
+    font-size: 9px;
+    font-family: inherit;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.4;
+}
+
+.settings-tw-btn:hover {
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-tw-btn.active[data-tw-mode="off"] {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.settings-tw-btn.active[data-tw-mode="monitor"] {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fde68a;
+}
+
+.settings-tw-btn.active[data-tw-mode="track"] {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+/* --- Panel Position Inputs --- */
+
+.settings-position-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 0;
+}
+
+.settings-position-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.settings-position-coord {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+}
+
+.settings-position-input {
+    width: 48px;
+    padding: 2px 4px;
+    font-size: 10px;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.6);
+    text-align: right;
+    outline: none;
+}
+
+.settings-position-input:focus {
+    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(129, 140, 248, 0.08);
+}
+
+/* --- Reset Button --- */
+
+.settings-reset-btn {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-family: inherit;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: center;
+}
+
+.settings-reset-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.settings-reset-btn:active {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* --- Settings button active state --- */
+
+#btn-settings.active {
+    background: rgba(129, 140, 248, 0.15);
+    border-color: rgba(129, 140, 248, 0.4);
+    color: #a5b4fc;
+}
+
+/* ===================================================================
+   Alarm / Alert Settings
+   =================================================================== */
+
+.alarm-global-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+}
+
+.alarm-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.alarm-range {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.alarm-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #a5b4fc;
+    cursor: pointer;
+    border: none;
+}
+
+.alarm-range::-webkit-slider-thumb:hover {
+    background: #c7d2fe;
+}
+
+.alarm-volume-value {
+    font-size: 10px;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    color: rgba(255, 255, 255, 0.4);
+    min-width: 30px;
+    text-align: right;
+}
+
+.alarm-test-row {
+    display: flex;
+    gap: 4px;
+    padding: 4px 0 2px;
+}
+
+.alarm-test-btn {
+    flex: 1;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-family: inherit;
+    font-weight: 500;
+    border: 1px solid rgba(129, 140, 248, 0.25);
+    border-radius: 4px;
+    background: rgba(129, 140, 248, 0.08);
+    color: #a5b4fc;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: center;
+}
+
+.alarm-test-btn:hover {
+    background: rgba(129, 140, 248, 0.18);
+    border-color: rgba(129, 140, 248, 0.4);
+}
+
+.alarm-test-btn:active {
+    background: rgba(129, 140, 248, 0.28);
+}
+
+/* --- Per-alarm config blocks --- */
+
+.alarm-config-block {
+    margin-bottom: 6px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.alarm-config-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.alarm-config-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.alarm-config-name {
+    flex: 1;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.alarm-config-details {
+    padding: 4px 0 2px 8px;
+}
+
+.alarm-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.alarm-mini-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.alarm-mini-toggle input[type="checkbox"] {
+    width: 11px;
+    height: 11px;
+    accent-color: #818cf8;
+    cursor: pointer;
+}
+
+.alarm-mini-label {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.35);
+    user-select: none;
+}
+
+.alarm-select {
+    padding: 1px 4px;
+    font-size: 9px;
+    font-family: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    outline: none;
+    cursor: pointer;
+}
+
+.alarm-select:focus {
+    border-color: rgba(129, 140, 248, 0.4);
+}
+
+.alarm-text-input {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 4px;
+    font-size: 9px;
+    font-family: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    outline: none;
+}
+
+.alarm-text-input:focus {
+    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(129, 140, 248, 0.06);
+}
+
+.alarm-text-input::placeholder {
+    color: rgba(255, 255, 255, 0.15);
+    font-style: italic;
+}
+
+.alarm-number-input {
+    width: 52px;
+    padding: 2px 4px;
+    font-size: 10px;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.6);
+    text-align: right;
+    outline: none;
+}
+
+.alarm-number-input:focus {
+    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(129, 140, 248, 0.08);
+}
+
+.alarm-threshold-input {
+    width: 36px;
+    padding: 1px 3px;
+    font-size: 10px;
+    font-family: 'Consolas', 'SF Mono', monospace;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    outline: none;
+    flex-shrink: 0;
+}
+
+.alarm-threshold-input:focus {
+    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(129, 140, 248, 0.08);
+}
+
+/* ===================================================================
+   Buff Entry Flash Animation (expiry alarm visual feedback)
+   =================================================================== */
+
+.buffs-entry-flash {
+    animation: buff-flash 0.6s ease-in-out 3;
+}
+
+@keyframes buff-flash {
+    0%, 100% {
+        background: rgba(239, 68, 68, 0.08);
+        border-left-color: #ef4444;
+    }
+    50% {
+        background: rgba(239, 68, 68, 0.35);
+        border-left-color: #fca5a5;
+    }
+}
+
+/* ===================================================================
+   Overlay Status Indicator (Alt1 mode — panels render on game screen)
+   =================================================================== */
+
+#overlay-status {
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    background: rgba(34, 197, 94, 0.06);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 6px;
+}
+
+.overlay-status-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.overlay-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+    animation: overlay-pulse 2s ease-in-out infinite;
+}
+
+.overlay-status-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #86efac;
+    letter-spacing: 0.3px;
+}
+
+.overlay-status-info {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.overlay-preview-btn {
+    width: 100%;
+    padding: 5px 8px;
+    font-size: 10px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.overlay-preview-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes overlay-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* --- Settings Header with Back Button --- */
+
+#settings-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.back-btn {
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid rgba(129, 140, 248, 0.3);
+    border-radius: 4px;
+    background: rgba(129, 140, 248, 0.1);
+    color: #a5b4fc;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.back-btn:hover {
+    background: rgba(129, 140, 248, 0.2);
+    border-color: rgba(129, 140, 248, 0.5);
+}
+
+.settings-title-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.3px;
+}

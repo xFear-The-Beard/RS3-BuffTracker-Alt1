@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Buff Tracker</title>
+    <script src="main.js" defer></script>
+</head>
+<body>
+    <div id="app">
+        <div id="status">
+            <div id="status-dot"></div>
+            <div id="status-text">Initializing...</div>
+        </div>
+
+        <!-- Main panels view -->
+        <div id="panels-view">
+            <!-- Panel 1: Combat Gauge -->
+            <div id="panel-combat-gauge" class="panel"></div>
+
+            <!-- Panel 2: Combat Buffs -->
+            <div id="panel-combat-buffs" class="panel"></div>
+        </div>
+
+        <!-- Settings view (hidden by default) -->
+        <div id="settings-view" style="display:none">
+            <div id="settings-header">
+                <button id="btn-settings-back" class="back-btn">&larr; Back</button>
+                <span class="settings-title-text">Settings</span>
+            </div>
+            <div id="settings-content"></div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls">
+            <button id="btn-cycle" title="Switch combat style">Cycle Style</button>
+            <button id="btn-detect" title="Auto-detect buff/debuff bars">Detect</button>
+            <button id="btn-calibrate" title="Reset positions">Reset</button>
+            <button id="btn-settings" title="Open settings">&#9881; Settings</button>
+        </div>
+        <!-- Debug UI is dynamically injected here when debugMode is enabled via Developer Settings -->
+        <div id="debug-container"></div>
+    </div>
+</body>
+</html>

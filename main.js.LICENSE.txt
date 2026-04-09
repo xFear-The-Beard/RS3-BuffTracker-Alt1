@@ -1,0 +1,27 @@
+/*! . */
+
+/*! ./alt1api */
+
+/*! ./declarations */
+
+/*! ./imagedata-extensions */
+
+/*! ./imagedetect */
+
+/*! ./imgref */
+
+/*! ./index */
+
+/*! ./nodepolyfill */
+
+/*! ./pasteinput */
+
+/*! ./rect */
+
+/*! ./wrapper */
+
+/*! canvas */
+
+/*! electron/common */
+
+/*! sharp */
