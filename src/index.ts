@@ -1,7 +1,7 @@
 import * as a1lib from 'alt1';
 import { detectBars, detectBar, detectBarFromClick, getRsScaling } from './lib/detector';
 import { BuffBarReader, compareBuffIcons } from './lib/reader';
-import { readTimerFromPixels } from './lib/digit-reader';
+import { readUpperTimerFromPixels } from './lib/digit-reader-upper';
 import { loadCalibration, saveCalibration, clearCalibration, createCalibration } from './lib/calibrator';
 import { BarRegion, BuffSlot, DetectionResult } from './lib/types';
 import { store } from './ui/store';
@@ -974,7 +974,7 @@ function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY
     const upperTextOffsetY = Math.round(10 * (gridSize / 30));
     const scanX = slot.bufferX + textOffsetX;
     const scanY = slot.bufferY + upperTextOffsetY;
-    const upperRead = readTimerFromPixels(
+    const upperRead = readUpperTimerFromPixels(
         lastBuffBuffer,
         scanX,
         scanY,
