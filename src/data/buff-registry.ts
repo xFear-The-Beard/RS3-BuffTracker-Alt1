@@ -115,7 +115,7 @@ export const COMBAT_BUFF_CATEGORIES: BuffCategory[] = [
         label: 'General Combat',
         tier: 1,
         defaultMode: 'track',
-        collapsed: false,
+        collapsed: true,
         buffs: [
             'overload', 'elder-overload', 'supreme-overload', 'supreme-overload-salve',
             'weapon-poison', 'prayer-renewal', 'super-prayer-renewal',
@@ -127,7 +127,7 @@ export const COMBAT_BUFF_CATEGORIES: BuffCategory[] = [
         label: 'Defensive Abilities',
         tier: 2,
         defaultMode: 'off',
-        collapsed: false,
+        collapsed: true,
         buffs: [
             'devotion', 'barricade', 'reflect', 'debilitate', 'resonance',
             'anticipation', 'freedom', 'immortality', 'divert', 'disruption-shield',
@@ -138,7 +138,7 @@ export const COMBAT_BUFF_CATEGORIES: BuffCategory[] = [
         label: 'Utility',
         tier: 2,
         defaultMode: 'off',
-        collapsed: false,
+        collapsed: true,
         buffs: [
             'vulnerability', 'smoke-cloud', 'limitless', 'ingenuity', 'onslaught',
         ].map(id => ({ id, name: BUFF_NAMES[id] || id })),
@@ -148,7 +148,7 @@ export const COMBAT_BUFF_CATEGORIES: BuffCategory[] = [
         label: 'Sigils',
         tier: 2,
         defaultMode: 'off',
-        collapsed: false,
+        collapsed: true,
         buffs: [
             'demon-slayer', 'dragon-slayer', 'undead-slayer',
         ].map(id => ({ id, name: BUFF_NAMES[id] || id })),
@@ -158,7 +158,7 @@ export const COMBAT_BUFF_CATEGORIES: BuffCategory[] = [
         label: 'Weapon Specs & Cooldowns',
         tier: 2,
         defaultMode: 'off',
-        collapsed: false,
+        collapsed: true,
         buffs: [
             'grimoire', 'scripture-jas', 'scripture-ful', 'scripture-wen',
             'excalibur-cooldown', 'sign-of-life-cooldown', 'elven-shard-cooldown',
