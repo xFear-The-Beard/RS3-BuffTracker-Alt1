@@ -943,9 +943,6 @@ let prevBuffSlotCount = 0;
 const abilityMissCount: Record<string, number> = {};
 const ABILITY_GRACE_MISSES = 10; // 10 × 200ms = 2 seconds of consecutive misses before deactivation
 
-/** Dual-text timer smoothing: last real read value and timestamp for countdown between reads */
-const dualTextLastRead: Record<string, { value: number; timestamp: number }> = {};
-
 /** Verbose debug: gates per-slot per-attempt logging. Set via console: (window as any).verboseDebug = true */
 let verboseDebug = false;
 
@@ -1123,27 +1120,16 @@ function processSlots(
 
         if (!wasRecentlyActive && abilityMatchCounts[bestDef.id] < ABILITY_DEBOUNCE_CYCLES) continue;
 
-        // Dual-text abilities: timer ONLY from upper-left (Timer 2), stacks always 0
+        // Dual-text abilities: timer ONLY from upper-left (Timer 2), stacks always 0.
+        // Raw reader output passes directly to gauge — no smoothing, no fallback.
         if (bestDef.maskProfile === 'dual-text') {
             const dual = readDualTextTimer(slot);
             if (verboseDebug) {
                 log(`[DualText] ${bestDef.shortName} buf=${dual.bufW}x${dual.bufH} scanAt=(${dual.scanX},${dual.scanY}) timer=${dual.time}s raw180="${dual.rawStrict}" raw150="${dual.rawRelaxed}" col=${slot.column}`, 'debug');
             }
-            let displayTime: number;
-            if (dual.time > 0) {
-                // Real read — snap to it and record for countdown
-                dualTextLastRead[bestDef.id] = { value: dual.time, timestamp: now };
-                displayTime = dual.time;
-            } else if (dualTextLastRead[bestDef.id]) {
-                // No read — countdown from last real value
-                const elapsed = (now - dualTextLastRead[bestDef.id].timestamp) / 1000;
-                displayTime = Math.max(0, Math.round(dualTextLastRead[bestDef.id].value - elapsed));
-            } else {
-                displayTime = 0;
-            }
             store.updateAbility(bestDef.id, {
                 active: true,
-                time: displayTime,
+                time: dual.time,
                 stacks: 0,
                 lastSeen: now,
             });
@@ -1206,8 +1192,6 @@ function processSlots(
             abilityMissCount[def.id] = (abilityMissCount[def.id] || 0) + 1;
             const graceMisses = def.type === 'stacking-buff' ? 25 : ABILITY_GRACE_MISSES; // 25 × 200ms = 5s for stacking
             if (abilityMissCount[def.id] > graceMisses) {
-                // Clean up dual-text countdown on deactivation
-                delete dualTextLastRead[def.id];
                 // Ability disappeared — exceeded miss threshold. Start cooldown if applicable
                 if (def.type === 'ability' && def.cooldownDuration) {
                     if (def.cooldownStart === 'on-expiry') {
