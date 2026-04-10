@@ -989,7 +989,7 @@ function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY
     if (!(readDualTextTimer as any)._dumpCount) {
         (readDualTextTimer as any)._dumpCount = 0;
     }
-    if ((readDualTextTimer as any)._dumpCount < 20) {
+    if ((readDualTextTimer as any)._dumpCount < 100) {
         (readDualTextTimer as any)._dumpCount++;
         const buf = lastBuffBuffer;
         const scale = gridSize / 30;

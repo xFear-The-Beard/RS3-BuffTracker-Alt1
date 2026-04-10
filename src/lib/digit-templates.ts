@@ -244,6 +244,23 @@ export const DIGIT_TEMPLATES: Record<string, DigitTemplate[]> = {
                 "100010001",
             ],
         },
+        // Compact variant for upper-left text rendering (skeleton dual-text "1m").
+        // Width 7, strokes at positions 0/3/6, derived from threshold-150 bitmap dump.
+        {
+            w: 7,
+            h: 9,
+            rows: [
+                "0000000",
+                "0000000",
+                "0000000",
+                "1110110",
+                "1001001",
+                "1001001",
+                "1001001",
+                "1001001",
+                "1001001",
+            ],
+        },
     ],
     "%": [
         {
