@@ -158,7 +158,7 @@ export class BuffBarReader {
      * This filters out action bar icons which have different border styling.
      */
     private hasActiveBorder(buffer: ImageData, px: number, py: number): boolean {
-        const { gridSize, isDebuff } = this.region;
+        const { gridSize, isDebuff, isEnemy } = this.region;
         const w = buffer.width;
         const data = buffer.data;
 
@@ -167,7 +167,8 @@ export class BuffBarReader {
         const DEBUFF_BORDER = { r: 204, g: 0, b: 0 };
         const TOLERANCE = 15;
 
-        const target = isDebuff ? DEBUFF_BORDER : BUFF_BORDER;
+        // Enemy debuff bar uses red borders just like player debuffs
+        const target = (isDebuff || isEnemy) ? DEBUFF_BORDER : BUFF_BORDER;
 
         const isMatch = (r: number, g: number, b: number): boolean => {
             return Math.abs(r - target.r) <= TOLERANCE &&
