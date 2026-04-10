@@ -10,14 +10,13 @@ Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuf
 
 ## Features
 
-- **Custom detection engine** — fully independent of Alt1's BuffReader. Works with the current RS3 UI (post-January 2026 font changes)
-- **Scale-aware** — detects buff bar at any RS3 UI scale, not locked to 100%
+- **Works with the current RS3 UI (post-January 2026 font changes)**
+- **Scale-aware (In-progress)** — Should currently function at 100, 120, 150, 200 - may require additional testing.
 - **Necromancy tracking** — conjures, Living Death, Darkness, Split Soul, Threads of Fate, Invoke Death, Bloat, Residual Souls, Necrosis stacks, Death Spark, Death Essence
 - **Enemy debuff tracking** — reads the target's debuff bar for Bloat, Invoke Death, Haunted
 - **Five gauge styles** — Compact (A), Classic (B), Modern (C), Themed (D), Themed Frames (E)
-- **Custom timer reading** — built-in digit recognition, no Alt1 OCR dependency
+- **Custom timer reading** — built-in digit recognition
 - **Configurable alerts** — buff expiry warnings, stack thresholds, timer alerts
-- **Cross-hardware compatible** — reference images are sRGB-stripped at build time via Alt1's imagedata-loader for consistent matching on any system
 
 ## Requirements
 
