@@ -312,8 +312,8 @@ function log(msg: string, level: 'info' | 'warn' | 'error' | 'debug' = 'info'): 
             const line = document.createElement('div');
             line.textContent = `${new Date().toLocaleTimeString()} [${level}] ${msg}`;
             el.appendChild(line);
-            // Keep only last 10000 lines (full skeleton lifecycle coverage)
-            while (el.childElementCount > 10000) {
+            // Keep only last 20000 lines (full skeleton lifecycle + diagnostic headroom)
+            while (el.childElementCount > 20000) {
                 el.removeChild(el.firstChild!);
             }
             el.scrollTop = el.scrollHeight;
@@ -982,11 +982,14 @@ function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY
         gridSize
     );
 
-    // Binary bitmap dump — fires for first 20 detections to diagnose template matching
+    // Binary bitmap dump — fires ONLY on read failures (empty or single-digit).
+    // Skip clean multi-char reads to avoid noise. Counter resets on fresh detection.
+    // Limit 100 per session, gives ~100 failure samples per skeleton summon.
     if (!(readDualTextTimer as any)._dumpCount) {
         (readDualTextTimer as any)._dumpCount = 0;
     }
-    if ((readDualTextTimer as any)._dumpCount < 100) {
+    const readFailed = upperRead.rawStrict.length < 2 && upperRead.rawRelaxed.length < 2;
+    if (readFailed && (readDualTextTimer as any)._dumpCount < 100) {
         (readDualTextTimer as any)._dumpCount++;
         const buf = lastBuffBuffer;
         const scale = gridSize / 30;
@@ -1123,6 +1126,10 @@ function processSlots(
         // Dual-text abilities: timer ONLY from upper-left (Timer 2), stacks always 0.
         // Raw reader output passes directly to gauge — no smoothing, no fallback.
         if (bestDef.maskProfile === 'dual-text') {
+            // Reset dump counter on fresh detection (skeleton newly appeared)
+            if (!currentAbilityState?.active) {
+                (readDualTextTimer as any)._dumpCount = 0;
+            }
             const dual = readDualTextTimer(slot);
             if (verboseDebug) {
                 log(`[DualText] ${bestDef.shortName} buf=${dual.bufW}x${dual.bufH} scanAt=(${dual.scanX},${dual.scanY}) timer=${dual.time}s raw180="${dual.rawStrict}" raw150="${dual.rawRelaxed}" col=${slot.column}`, 'debug');
