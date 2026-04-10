@@ -176,27 +176,6 @@ function matchTemplates(
     }
     if (firstX < 0) return '';
 
-    // Skip isolated thin columns at the left edge (border corner anti-aliasing).
-    // Real text characters form runs of 3+ consecutive bright columns.
-    // A 1-2px artifact before the text body can false-match as "1".
-    let sustainedStart = firstX;
-    let consecutive = 0;
-    for (let sx = firstX; sx <= lastX; sx++) {
-        let hasBright = false;
-        for (let y = textTop; y <= textBottom; y++) {
-            if (bmp[y][sx] === 1) { hasBright = true; break; }
-        }
-        if (hasBright) {
-            if (consecutive === 0) sustainedStart = sx;
-            consecutive++;
-            if (consecutive >= 3) {
-                firstX = sustainedStart;
-                break;
-            }
-        } else {
-            consecutive = 0;
-        }
-    }
 
     let result = '';
     let x = firstX;
