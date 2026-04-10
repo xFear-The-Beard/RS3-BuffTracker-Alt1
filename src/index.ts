@@ -312,8 +312,8 @@ function log(msg: string, level: 'info' | 'warn' | 'error' | 'debug' = 'info'): 
             const line = document.createElement('div');
             line.textContent = `${new Date().toLocaleTimeString()} [${level}] ${msg}`;
             el.appendChild(line);
-            // Keep only last 2000 lines
-            while (el.childElementCount > 2000) {
+            // Keep only last 10000 lines (full skeleton lifecycle coverage)
+            while (el.childElementCount > 10000) {
                 el.removeChild(el.firstChild!);
             }
             el.scrollTop = el.scrollHeight;
