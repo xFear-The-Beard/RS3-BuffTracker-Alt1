@@ -100,22 +100,25 @@ export class CompactRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
-        canvas.width = dims.width;
-        canvas.height = dims.height;
+        canvas.width = Math.round(dims.width * scale);
+        canvas.height = Math.round(dims.height * scale);
 
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.scale(scale, scale);
 
         // Background
         ctx.fillStyle = 'rgba(10, 8, 20, 209)'; // 0.82 * 255
-        roundRect(ctx, 0, 0, canvas.width, canvas.height, 6);
+        roundRect(ctx, 0, 0, dims.width, dims.height, 6);
         ctx.fill();
 
         // Border
         ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
         ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, canvas.width - 1, canvas.height - 1, 6);
+        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
         ctx.stroke();
 
         const padX = 12;
@@ -125,7 +128,7 @@ export class CompactRenderer implements OverlayRenderer {
         const pillW = 72;
         const pillH = 26;
         const pillGap = 4;
-        const maxPerRow = Math.floor((canvas.width - padX * 2 + pillGap) / (pillW + pillGap));
+        const maxPerRow = Math.floor((dims.width - padX * 2 + pillGap) / (pillW + pillGap));
 
         let px = padX;
         let rowCount = 0;
@@ -164,21 +167,21 @@ export class CompactRenderer implements OverlayRenderer {
 
                 // Bar background
                 ctx.fillStyle = 'rgba(120,200,80,0.03)';
-                roundRect(ctx, padX, y, canvas.width - padX * 2, barH, 4);
+                roundRect(ctx, padX, y, dims.width - padX * 2, barH, 4);
                 ctx.fill();
 
                 ctx.strokeStyle = 'rgba(140,80,200,0.12)';
                 ctx.lineWidth = 1;
-                roundRect(ctx, padX + 0.5, y + 0.5, canvas.width - padX * 2 - 1, barH - 1, 4);
+                roundRect(ctx, padX + 0.5, y + 0.5, dims.width - padX * 2 - 1, barH - 1, 4);
                 ctx.stroke();
 
                 if (isActive && bloat.internalDuration) {
                     const progress = Math.min(1, bloatState!.time / bloat.internalDuration);
                     if (progress > 0) {
                         ctx.save();
-                        roundRect(ctx, padX, y, canvas.width - padX * 2, barH, 4);
+                        roundRect(ctx, padX, y, dims.width - padX * 2, barH, 4);
                         ctx.clip();
-                        const fillW = Math.max(8, (canvas.width - padX * 2) * progress);
+                        const fillW = Math.max(8, (dims.width - padX * 2) * progress);
                         ctx.fillStyle = 'rgba(140,80,200,0.12)';
                         ctx.fillRect(padX, y, fillW, barH);
                         ctx.restore();
@@ -200,14 +203,14 @@ export class CompactRenderer implements OverlayRenderer {
                 ctx.font = '500 10px Consolas, "SF Mono", monospace';
                 ctx.fillStyle = isActive ? '#8c50c8' : 'rgba(255,255,255,0.15)';
                 ctx.textAlign = 'right';
-                ctx.fillText(isActive ? formatTimeShort(bloatState!.time) : '\u2014', canvas.width - padX - 4, y + barH / 2);
+                ctx.fillText(isActive ? formatTimeShort(bloatState!.time) : '\u2014', dims.width - padX - 4, y + barH / 2);
 
                 y += barH + 4;
             }
 
             // Conjure pills (same size as ability pills)
             const cPillGap = 4;
-            const cPillW = (canvas.width - padX * 2 - cPillGap * (conjureAbilities.length - 1)) / conjureAbilities.length;
+            const cPillW = (dims.width - padX * 2 - cPillGap * (conjureAbilities.length - 1)) / conjureAbilities.length;
             const cPillH = 26;
             let cx = padX;
             for (const conjure of conjureAbilities) {
@@ -217,6 +220,8 @@ export class CompactRenderer implements OverlayRenderer {
             }
             y += cPillH + 4;
         }
+
+        ctx.restore();
     }
 
     private drawPill(

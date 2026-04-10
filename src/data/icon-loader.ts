@@ -9,6 +9,8 @@
  * for gauge rendering only — they are NOT used for detection.
  */
 
+import { debugLog } from '../lib/debug';
+
 /**
  * Detection ref images — loaded via imagedata-loader at build time.
  * Each require() returns a Promise<ImageData> with sRGB-stripped pixels.
@@ -342,14 +344,14 @@ export async function loadAllRefImages(): Promise<void> {
         }
     }
 
-    console.log(`[IconLoader] Loaded ${loaded} detection refs via imagedata-loader (${failed} failed)`);
+    debugLog(`[IconLoader] Loaded ${loaded} detection refs via imagedata-loader (${failed} failed)`);
 
     // Log verification for first few refs
     const sampleIds = Object.keys(allImages).slice(0, 3);
     for (const id of sampleIds) {
         const img = allImages[id];
         const d = img.data;
-        console.log(`[IconLoader] Ref[${id}] ${img.width}x${img.height} px(0,0)=R${d[0]}G${d[1]}B${d[2]}A${d[3]} px(1,0)=R${d[4]}G${d[5]}B${d[6]}A${d[7]}`);
+        debugLog(`[IconLoader] Ref[${id}] ${img.width}x${img.height} px(0,0)=R${d[0]}G${d[1]}B${d[2]}A${d[3]} px(1,0)=R${d[4]}G${d[5]}B${d[6]}A${d[7]}`);
     }
 
     // Load display images for gauge rendering
@@ -366,7 +368,7 @@ export async function loadAllRefImages(): Promise<void> {
         }
     });
     await Promise.all(displayPromises);
-    console.log(`[IconLoader] Loaded ${displayLoaded} display images`);
+    debugLog(`[IconLoader] Loaded ${displayLoaded} display images`);
 
     // Load custom indicator images
     const indicatorPaths: Record<string, string> = {
@@ -377,7 +379,7 @@ export async function loadAllRefImages(): Promise<void> {
         const img = await loadPngAsImage(indicatorPath);
         if (img) {
             indicatorImages[id] = img;
-            console.log(`[IconLoader] Loaded indicator: ${id}`);
+            debugLog(`[IconLoader] Loaded indicator: ${id}`);
         }
     }
 }

@@ -43,28 +43,32 @@ export class ThemedRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
-        canvas.width = dims.width;
-        canvas.height = dims.height;
+        canvas.width = Math.round(dims.width * scale);
+        canvas.height = Math.round(dims.height * scale);
 
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.scale(scale, scale);
 
         switch (def.id as CombatStyle) {
             case 'necromancy':
-                this.drawNecromancy(ctx, state, def, canvas.width, canvas.height);
+                this.drawNecromancy(ctx, state, def, dims.width, dims.height);
                 break;
             case 'magic':
-                this.drawMagic(ctx, state, def, canvas.width, canvas.height);
+                this.drawMagic(ctx, state, def, dims.width, dims.height);
                 break;
             case 'ranged':
-                this.drawRanged(ctx, state, def, canvas.width, canvas.height);
+                this.drawRanged(ctx, state, def, dims.width, dims.height);
                 break;
             case 'melee':
-                this.drawMelee(ctx, state, def, canvas.width, canvas.height);
+                this.drawMelee(ctx, state, def, dims.width, dims.height);
                 break;
         }
 
+        ctx.restore();
     }
 
     // =====================================================================

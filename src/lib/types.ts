@@ -66,9 +66,16 @@ export interface DetectionResult {
 }
 
 /**
- * Calibration data stored between sessions
+ * Calibration data stored between sessions.
+ *
+ * `schemaVersion` lets us migrate or invalidate old saves cleanly when the
+ * shape changes. Bump it whenever a field is added, removed, or its semantics
+ * change. Loaders should treat a missing or older version as a hint to
+ * re-detect rather than blindly using the data.
  */
 export interface CalibrationData {
+    /** Schema version for migration handling. Bump on shape changes. */
+    schemaVersion: number;
     buffs: BarRegion | null;
     debuffs: BarRegion | null;
     /** Enemy target debuff region (for Invoke Death, Bloat, etc.) */
@@ -77,14 +84,6 @@ export interface CalibrationData {
     rsScaling: number;
 }
 
-/**
- * Color analysis result for a candidate border pixel
- */
-export interface ColorScore {
-    /** How "green-dominant" this pixel is relative to background */
-    greenScore: number;
-    /** How "red-dominant" this pixel is relative to background */
-    redScore: number;
-    /** How different from the purple UI background */
-    bgDifference: number;
-}
+/** Current calibration data schema version. Bump on any shape change. */
+export const CALIBRATION_SCHEMA_VERSION = 1;
+

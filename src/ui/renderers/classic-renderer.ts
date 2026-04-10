@@ -151,23 +151,26 @@ export class ClassicRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
-        canvas.width = dims.width;
-        canvas.height = dims.height;
+        canvas.width = Math.round(dims.width * scale);
+        canvas.height = Math.round(dims.height * scale);
 
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.scale(scale, scale);
 
         // Background gradient (approximation — canvas can't do CSS gradients easily)
         ctx.fillStyle = 'rgba(18, 12, 30, 235)'; // 0.92 * 255
-        roundRect(ctx, 0, 0, canvas.width, canvas.height, 4);
+        roundRect(ctx, 0, 0, dims.width, dims.height, 4);
         ctx.fill();
 
         // Border
         const [sr, sg, sb] = hexToRgb(def.color);
         ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.4)`;
         ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, canvas.width - 1, canvas.height - 1, 4);
+        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 4);
         ctx.stroke();
 
         const padX = 8;
@@ -181,7 +184,7 @@ export class ClassicRenderer implements OverlayRenderer {
         const cellGap = 4;
         const labelH = 12;
         const totalGridW = cols * cellW + (cols - 1) * cellGap;
-        const gridStartX = padX + (canvas.width - padX * 2 - totalGridW) / 2;
+        const gridStartX = padX + (dims.width - padX * 2 - totalGridW) / 2;
 
         // Necromancy grouping: Row 1 = ultimates (2), Row 2 = incantations (4)
         // Other styles: keep original 4-column flow
@@ -190,7 +193,7 @@ export class ClassicRenderer implements OverlayRenderer {
         const isNecro = def.id === 'necromancy';
 
         if (isNecro) {
-            const contentW = canvas.width - padX * 2;
+            const contentW = dims.width - padX * 2;
 
             // Row 1: Ultimates (2 icons, spread across full width)
             const ultimates = def.abilities.filter(a => ultimateIds.includes(a.id));
@@ -243,7 +246,7 @@ export class ClassicRenderer implements OverlayRenderer {
         if (stackAbilities.length > 0) {
             y += 2;
             const barGap = 6;
-            const barW = (canvas.width - padX * 2 - barGap * (stackAbilities.length - 1)) / stackAbilities.length;
+            const barW = (dims.width - padX * 2 - barGap * (stackAbilities.length - 1)) / stackAbilities.length;
 
             let bx = padX;
             for (const ability of stackAbilities) {
@@ -259,7 +262,7 @@ export class ClassicRenderer implements OverlayRenderer {
         if (bloat) {
             y += 2;
             const bloatState = state.abilities['bloat'];
-            this.drawBloatBar(ctx, bloat, bloatState, padX, y, canvas.width - padX * 2);
+            this.drawBloatBar(ctx, bloat, bloatState, padX, y, dims.width - padX * 2);
             y += 26;
         }
 
@@ -269,7 +272,7 @@ export class ClassicRenderer implements OverlayRenderer {
         if (conjureAbilities.length > 0) {
             y += 4;
             const pillGap = 4;
-            const pillW = (canvas.width - padX * 2 - pillGap * (conjureAbilities.length - 1)) / conjureAbilities.length;
+            const pillW = (dims.width - padX * 2 - pillGap * (conjureAbilities.length - 1)) / conjureAbilities.length;
             const pillH = 18;
             let cx = padX;
 
@@ -302,6 +305,8 @@ export class ClassicRenderer implements OverlayRenderer {
             }
             y += pillH;
         }
+
+        ctx.restore();
     }
 
     private drawIconCell(

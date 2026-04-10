@@ -42,12 +42,15 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
-        canvas.width = dims.width;
-        canvas.height = dims.height;
+        canvas.width = Math.round(dims.width * scale);
+        canvas.height = Math.round(dims.height * scale);
 
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.scale(scale, scale);
 
         const style = def.id as CombatStyle;
         const [sr, sg, sb] = hexToRgb(def.color);
@@ -60,13 +63,13 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             melee: 'rgba(12, 4, 4, 235)',
         };
         ctx.fillStyle = bgColors[style] || 'rgba(8, 6, 16, 235)';
-        roundRect(ctx, 0, 0, canvas.width, canvas.height, 10);
+        roundRect(ctx, 0, 0, dims.width, dims.height, 10);
         ctx.fill();
 
         // Border
         ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.25)`;
         ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, canvas.width - 1, canvas.height - 1, 10);
+        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 10);
         ctx.stroke();
 
         const padX = 20;
@@ -79,14 +82,14 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const iconSize = 48;
         const iconGap = 10;
         const totalGridW = cols * iconSize + (cols - 1) * iconGap;
-        const gridStartX = padX + (canvas.width - padX * 2 - totalGridW) / 2;
+        const gridStartX = padX + (dims.width - padX * 2 - totalGridW) / 2;
 
         const ultimateIds = ['living_death', 'death_skulls'];
         const incantationIds = ['invoke_death', 'threads', 'darkness', 'split_soul_necro'];
         const isNecro = def.id === 'necromancy';
 
         if (isNecro) {
-            const contentW = canvas.width - padX * 2;
+            const contentW = dims.width - padX * 2;
 
             // Row 1: Ultimates (2 icons, larger, spread across full width)
             const ultimates = def.abilities.filter(a => ultimateIds.includes(a.id));
@@ -138,14 +141,14 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const stackAbilities = def.abilities.filter(a => isStackingDisplay(a.type) && !GAUGE_EXCLUDED_IDS.has(a.id));
         if (stackAbilities.length > 0) {
             y += 2;
-            y = this.drawThemedStacks(ctx, stackAbilities, state, def, padX, y, canvas.width - padX * 2, style);
+            y = this.drawThemedStacks(ctx, stackAbilities, state, def, padX, y, dims.width - padX * 2, style);
         }
 
         // Bloat progress bar (enemy-debuff, not caught by isTimerDisplay)
         const bloat = def.abilities.find(a => a.id === 'bloat');
         if (bloat) {
             y += 4;
-            y = this.drawBloatBar(ctx, bloat, state, padX, y, canvas.width - padX * 2, style);
+            y = this.drawBloatBar(ctx, bloat, state, padX, y, dims.width - padX * 2, style);
         }
 
         // Conjures (necromancy)
@@ -155,9 +158,9 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             y += 2;
             // Divider
             ctx.fillStyle = `rgba(${sr},${sg},${sb},0.12)`;
-            ctx.fillRect(padX, y, canvas.width - padX * 2, 1);
+            ctx.fillRect(padX, y, dims.width - padX * 2, 1);
             y += 8;
-            y = this.drawThemedConjures(ctx, conjureAbilities, state, padX, y, canvas.width - padX * 2);
+            y = this.drawThemedConjures(ctx, conjureAbilities, state, padX, y, dims.width - padX * 2);
         }
 
         // Melee channels (special section)
@@ -168,11 +171,13 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             if (channelAbilities.length > 0) {
                 y += 2;
                 ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
-                ctx.fillRect(padX, y, canvas.width - padX * 2, 1);
+                ctx.fillRect(padX, y, dims.width - padX * 2, 1);
                 y += 8;
-                y = this.drawChannelBars(ctx, channelAbilities, state, padX, y, canvas.width - padX * 2);
+                y = this.drawChannelBars(ctx, channelAbilities, state, padX, y, dims.width - padX * 2);
             }
         }
+
+        ctx.restore();
     }
 
     /**

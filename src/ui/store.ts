@@ -48,6 +48,10 @@ export interface AppState {
     overlayScale: number;
     /** Ability IDs hidden from the gauge */
     hiddenAbilities: string[];
+    /** Set when a saved calibration is older than 7 days. Banner dismissed for the current session by setCalibrationStaleDismissed. */
+    calibrationStale: boolean;
+    /** Whether the user has dismissed the stale-calibration banner this session. */
+    calibrationStaleDismissed: boolean;
 }
 
 type Listener = (state: AppState) => void;
@@ -128,7 +132,23 @@ class Store {
             noSoulboundLantern: loadUserSetting('noSoulboundLantern') === 'true',
             overlayScale: parseFloat(loadUserSetting('overlayScale') || '1.0') || 1.0,
             hiddenAbilities: JSON.parse(loadUserSetting('hiddenAbilities') || '[]'),
+            calibrationStale: false,
+            calibrationStaleDismissed: false,
         };
+    }
+
+    setCalibrationStale(stale: boolean): void {
+        if (this.state.calibrationStale !== stale) {
+            this.state = { ...this.state, calibrationStale: stale };
+            this.notify();
+        }
+    }
+
+    dismissCalibrationStaleBanner(): void {
+        if (!this.state.calibrationStaleDismissed) {
+            this.state = { ...this.state, calibrationStaleDismissed: true };
+            this.notify();
+        }
     }
 
     getState(): AppState {

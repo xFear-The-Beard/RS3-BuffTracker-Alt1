@@ -2,7 +2,7 @@ import * as a1lib from 'alt1';
 import { detectBars, detectBar, detectBarFromClick, getRsScaling } from './lib/detector';
 import { BuffBarReader, compareBuffIcons } from './lib/reader';
 import { readUpperTimerFromPixels } from './lib/digit-reader-upper';
-import { loadCalibration, saveCalibration, clearCalibration, createCalibration } from './lib/calibrator';
+import { loadCalibration, saveCalibration, clearCalibration, createCalibration, isCalibrationStale } from './lib/calibrator';
 import { BarRegion, BuffSlot, DetectionResult } from './lib/types';
 import { store } from './ui/store';
 import { COMBAT_STYLES, CombatStyle, getStyleDef } from './data/abilities';
@@ -16,6 +16,7 @@ import { CombatBuffsRenderer } from './ui/renderers/combat-buffs-renderer';
 import { OverlayManager } from './ui/overlay-manager';
 import { OverlayRenderer } from './ui/renderer';
 import { initSettings, renderSettings, setDebugModeToggleCallback, getDebugModeEnabled } from './ui/settings';
+import { setDebugLogEnabled } from './lib/debug';
 import { alarmManager } from './ui/alarm-manager';
 
 // Import static assets so webpack copies them to dist
@@ -56,6 +57,7 @@ let lastBuffBuffer: ImageData | null = null;
 let bloatTimer: { active: boolean; remaining: number; interval: ReturnType<typeof setInterval> | null } = { active: false, remaining: 0, interval: null };
 let readInterval: ReturnType<typeof setInterval> | null = null;
 let debugMode = getDebugModeEnabled();
+setDebugLogEnabled(debugMode);
 let debugPaused = false;
 let pixelDumpDone = false;
 let isRunning = false;
@@ -312,8 +314,8 @@ function log(msg: string, level: 'info' | 'warn' | 'error' | 'debug' = 'info'): 
             const line = document.createElement('div');
             line.textContent = `${new Date().toLocaleTimeString()} [${level}] ${msg}`;
             el.appendChild(line);
-            // Keep only last 20000 lines (full skeleton lifecycle + diagnostic headroom)
-            while (el.childElementCount > 20000) {
+            // Keep only last 5000 lines (~50 minutes of normal-rate logging)
+            while (el.childElementCount > 5000) {
                 el.removeChild(el.firstChild!);
             }
             el.scrollTop = el.scrollHeight;
@@ -383,6 +385,10 @@ function showOverlayStatus(): void {
 function initDetection(): void {
     // Try loading saved calibration, but verify position is still valid
     const saved = loadCalibration();
+    // Surface a non-blocking banner if the saved calibration is more than 7 days old.
+    // The user can dismiss it for the session, but it will reappear next launch
+    // if the calibration is still stale.
+    store.setCalibrationStale(isCalibrationStale(saved));
     if (saved) {
         const currentScale = getRsScaling();
         if (Math.abs(saved.rsScaling - currentScale) < 0.05) {
@@ -506,6 +512,10 @@ function startHoverScan(mode: 'buff' | 'debuff' | 'enemy'): void {
 
     showDetectPrompt();
 
+    // Track scan start so we can show a UI scale hint if nothing is found after a while
+    const scanStartTime = Date.now();
+    let scaleHintShown = false;
+
     // Start polling mouse position + checking for buff icon
     if (detectPollInterval) clearInterval(detectPollInterval);
     detectPollInterval = setInterval(() => {
@@ -530,6 +540,18 @@ function startHoverScan(mode: 'buff' | 'debuff' | 'enemy'): void {
             log(`Auto-detected: ${result.message}`);
 
             showDetectPrompt();
+            return;
+        }
+
+        // After 8 seconds with no detection, surface a UI scale hint.
+        // Most "won't detect" issues are caused by the RS3 in-game interface
+        // scale being outside the range the detector handles.
+        if (!scaleHintShown && Date.now() - scanStartTime > 8000) {
+            scaleHintShown = true;
+            setStatus(
+                `Couldn't find a ${barType.toLowerCase()} icon yet. If hovering doesn't work, try changing your RS3 in-game UI Settings → Display → Interface Scale, then click Detect again.`,
+                'warn',
+            );
         }
     }, 150);
 }
@@ -967,8 +989,7 @@ const HEARTBEAT_INTERVAL_MS = 10000;
 function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY: number; bufW: number; bufH: number; rawStrict: string; rawRelaxed: string } {
     if (!lastBuffBuffer || !buffReader) return { time: 0, scanX: 0, scanY: 0, bufW: 0, bufH: 0, rawStrict: '', rawRelaxed: '' };
     const gridSize = buffReader.region.gridSize;
-    // Same X offset as Timer 1 (lower-left) — sustained-column filter in digit reader
-    // handles border corner anti-aliasing that previously caused false "1" matches.
+    // Same X offset as Timer 1 (lower-left).
     const textOffsetX = Math.round(2 * (gridSize / 30));
     // Place origin below upper-left text (row 10 at 100% scale) and scan UP
     const upperTextOffsetY = Math.round(10 * (gridSize / 30));
@@ -981,44 +1002,6 @@ function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY
         'up',
         gridSize
     );
-
-    // Binary bitmap dump — fires ONLY on read failures (empty or single-digit).
-    // Skip clean multi-char reads to avoid noise. Counter resets on fresh detection.
-    // Limit 500 per session, covers a full 60s skeleton cycle with margin.
-    if (!(readDualTextTimer as any)._dumpCount) {
-        (readDualTextTimer as any)._dumpCount = 0;
-    }
-    const readFailed = upperRead.rawStrict.length < 2 && upperRead.rawRelaxed.length < 2;
-    if (readFailed && (readDualTextTimer as any)._dumpCount < 500) {
-        (readDualTextTimer as any)._dumpCount++;
-        const buf = lastBuffBuffer;
-        const scale = gridSize / 30;
-        const sY = Math.max(0, scanY - Math.round(8 * scale));
-        const eY = Math.min(buf.height, scanY + Math.round(2 * scale));
-        const sX = Math.max(0, scanX);
-        const eX = Math.min(buf.width, scanX + Math.round(26 * scale));
-        const w = eX - sX, h = eY - sY;
-
-        // Build binary bitmaps at both thresholds (same as digit reader)
-        let bmp180 = '';
-        let bmp150 = '';
-        for (let y = 0; y < h; y++) {
-            let row180 = '';
-            let row150 = '';
-            for (let x = 0; x < Math.min(w, 20); x++) {
-                const i = ((sY + y) * buf.width + (sX + x)) * 4;
-                const r = buf.data[i], g = buf.data[i + 1], b = buf.data[i + 2];
-                row180 += (r > 180 && g > 180 && b > 180) ? '1' : '.';
-                row150 += (r > 150 && g > 150 && b > 150) ? '1' : '.';
-            }
-            bmp180 += row180 + '|';
-            bmp150 += row150 + '|';
-        }
-
-        log(`[DualDump#${(readDualTextTimer as any)._dumpCount}] grid=${gridSize} scan=(${scanX},${scanY}) win=[${sX}-${eX})x[${sY}-${eY}) raw180="${upperRead.rawStrict}" raw150="${upperRead.rawRelaxed}" t=${upperRead.time}`, 'warn');
-        log(`  bmp180: ${bmp180}`, 'warn');
-        log(`  bmp150: ${bmp150}`, 'warn');
-    }
 
     return { time: upperRead.time, scanX, scanY, bufW: lastBuffBuffer.width, bufH: lastBuffBuffer.height, rawStrict: upperRead.rawStrict, rawRelaxed: upperRead.rawRelaxed };
 }
@@ -1126,10 +1109,6 @@ function processSlots(
         // Dual-text abilities: timer ONLY from upper-left (Timer 2), stacks always 0.
         // Raw reader output passes directly to gauge — no smoothing, no fallback.
         if (bestDef.maskProfile === 'dual-text') {
-            // Reset dump counter on fresh detection (skeleton newly appeared)
-            if (!currentAbilityState?.active) {
-                (readDualTextTimer as any)._dumpCount = 0;
-            }
             const dual = readDualTextTimer(slot);
             if (verboseDebug) {
                 log(`[DualText] ${bestDef.shortName} buf=${dual.bufW}x${dual.bufH} scanAt=(${dual.scanX},${dual.scanY}) timer=${dual.time}s raw180="${dual.rawStrict}" raw150="${dual.rawRelaxed}" col=${slot.column}`, 'debug');
@@ -1490,6 +1469,7 @@ function init(): void {
     // Register debug mode toggle callback
     setDebugModeToggleCallback((enabled: boolean) => {
         debugMode = enabled;
+        setDebugLogEnabled(enabled);
         debugPaused = false;
         if (enabled) {
             injectDebugUI();

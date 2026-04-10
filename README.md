@@ -14,7 +14,7 @@ Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuf
 - **Scale-aware** — detects buff bar at any RS3 UI scale, not locked to 100%
 - **Necromancy tracking** — conjures, Living Death, Darkness, Split Soul, Threads of Fate, Invoke Death, Bloat, Residual Souls, Necrosis stacks, Death Spark, Death Essence
 - **Enemy debuff tracking** — reads the target's debuff bar for Bloat, Invoke Death, Haunted
-- **Multiple gauge styles** — Compact, Classic, Modern, Themed, Frames
+- **Five gauge styles** — Compact (A), Classic (B), Modern (C), Themed (D), Themed Frames (E)
 - **Custom timer reading** — built-in digit recognition, no Alt1 OCR dependency
 - **Configurable alerts** — buff expiry warnings, stack thresholds, timer alerts
 - **Cross-hardware compatible** — reference images are sRGB-stripped at build time via Alt1's imagedata-loader for consistent matching on any system
@@ -24,7 +24,7 @@ Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuf
 - [Alt1 Toolkit](https://runeapps.org) installed
 - RuneScape 3 (NXT client)
 - Buff bar icon size: **Small** (in RS3 Settings → Interfaces → Buff Bar)
-- Game and UI Scale: **100%** recommended (other scales supported but less tested)
+- Game and UI Scale: **100% recommended.** Other scales work too — the detector handles roughly 60% to 260% of default. If detection won't find your buff bar, try changing your RS3 in-game UI Settings → Display → Interface Scale and click Detect again.
 
 ## Installation
 
@@ -65,7 +65,8 @@ It works with the current RS3 interface (post-January 2026 UI update) and handle
 | Enemy Debuffs | Bloat, Invoke Death, Haunted |
 | Excluded | Bone Shield (consumed silently to prevent false matches) |
 
-*Additional combat styles (Magic, Ranged, Melee) have reference images included but are not yet wired for active tracking.*
+### Magic, Ranged, Melee
+Magic, Ranged, and Melee abilities are defined and tracked at the data layer (Sunshine, Death's Swiftness, Berserk, Bloodlust, Perfect Equilibrium, etc.), but the gauges currently render them with a generic layout instead of style-specific visuals. Necromancy gets dedicated treatment (soul orbs, conjure pills, prominent ultimates) because that's what was built out first. Style-specific layouts for Magic, Ranged, and Melee are planned — see the Roadmap section below.
 
 ## Settings
 
@@ -74,6 +75,14 @@ It works with the current RS3 interface (post-January 2026 UI update) and handle
 - **Position & scale** — nudge buttons and scale slider (50-200%)
 - **Alert thresholds** — configure when expiry/stack warnings trigger
 - **Developer Settings** — debug logging, session recording, log export (hidden by default)
+
+## Roadmap
+
+- Style-specific gauge layouts for Magic, Ranged, and Melee — currently they share a generic layout while Necromancy gets dedicated visuals. Each style needs its own treatment for ultimates, channel sequences, and stack counters (Berserk + Bloodlust, Death's Swiftness + Perfect Equilibrium, Sunshine + soul fragments, etc.).
+- Skilling tracker panel — a third overlay panel for skilling buffs (XP boosts, gathering bonuses, prayer renewals outside combat). Reference images are already collected; UI work is pending.
+- Combat Buffs panel — a checklist mode for tracking always-on potions, scriptures, auras, and prayer renewal that should always be active during combat.
+- Death Skulls cooldown tracking — needs action bar reading rather than buff bar matching.
+- Color tolerance auto-calibration — the current border detection uses a fixed RGB tolerance that may be tight for monitors with non-standard gamma or color profiles. Auto-calibration on first detection would make this more forgiving.
 
 ## Building from Source
 

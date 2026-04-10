@@ -1,6 +1,7 @@
 import * as a1lib from 'alt1';
 import { BarRegion, BuffSlot, RGBColor } from './types';
 import { readTimerFromPixels } from './digit-reader';
+import { debugLog } from './debug';
 
 /**
  * Custom BuffReader that works at any UI scale.
@@ -57,8 +58,8 @@ export class BuffBarReader {
         // ONE-TIME position dump
         if (!(this as any)._posDumped) {
             (this as any)._posDumped = true;
-            console.log(`[Reader] Buffer: ${buffer.width}x${buffer.height}, grid=${gridSize}, icon=${iconSize}, maxCol=${this.region.maxColumns}, maxRow=${this.region.maxRows}`);
-            console.log(`[Reader] Screen origin: (${this.region.x}, ${this.region.y})`);
+            debugLog(`[Reader] Buffer: ${buffer.width}x${buffer.height}, grid=${gridSize}, icon=${iconSize}, maxCol=${this.region.maxColumns}, maxRow=${this.region.maxRows}`);
+            debugLog(`[Reader] Screen origin: (${this.region.x}, ${this.region.y})`);
         }
 
         for (let row = 0; row <= this.region.maxRows; row++) {
@@ -83,7 +84,7 @@ export class BuffBarReader {
                             const si = (py * buffer.width + (px + dx)) * 4;
                             samples.push(`R${buffer.data[si]}G${buffer.data[si+1]}B${buffer.data[si+2]}`);
                         }
-                        console.log(`[Reader] Slot (${col},${row}): screen=(${screenX},${screenY}) border=${hasBorder} topEdge=[${samples.join(', ')}]`);
+                        debugLog(`[Reader] Slot (${col},${row}): screen=(${screenX},${screenY}) border=${hasBorder} topEdge=[${samples.join(', ')}]`);
                     }
                 }
 
@@ -136,7 +137,7 @@ export class BuffBarReader {
         // Mark slot dump as done
         if (!(this as any)._slotsDumped) {
             (this as any)._slotsDumped = true;
-            console.log(`[Reader] Found ${slots.length} active slots on first scan`);
+            debugLog(`[Reader] Found ${slots.length} active slots on first scan`);
         }
 
         // Update maxColumns based on what we actually found

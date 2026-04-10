@@ -1,5 +1,6 @@
 import * as a1lib from 'alt1';
 import { BarRegion, DetectionResult, RGBColor } from './types';
+import { debugLog } from './debug';
 
 /**
  * Click-to-anchor buff/debuff bar detector.
@@ -21,8 +22,11 @@ import { BarRegion, DetectionResult, RGBColor } from './types';
  */
 
 // --- Size expectations ---
-const EXPECTED_ICON_SIZES = { min: 20, default: 27, max: 50 };
-const EXPECTED_GRID_SIZES = { min: 22, default: 30, max: 56 };
+// Range covers roughly 60%-260% of the default RS3 UI scale.
+// Expanded from the original 75%-185% range to support 4K monitors at very small
+// scale (icons ~16px) and small displays at very large scale (icons ~70px).
+const EXPECTED_ICON_SIZES = { min: 16, default: 27, max: 70 };
+const EXPECTED_GRID_SIZES = { min: 18, default: 30, max: 80 };
 
 /** How far around the click to capture for analysis (pixels) */
 const CAPTURE_RADIUS = 200;
@@ -88,7 +92,7 @@ function findIconAtPoint(
         }
     }
     if (topBorder < 0) {
-        console.log(`[Detector] No top border found scanning up from (${clickX},${clickY})`);
+        debugLog(`[Detector] No top border found scanning up from (${clickX},${clickY})`);
         return null;
     }
 
@@ -105,7 +109,7 @@ function findIconAtPoint(
         }
     }
     if (bottomBorder < 0) {
-        console.log(`[Detector] No bottom border found scanning down from (${clickX},${clickY})`);
+        debugLog(`[Detector] No bottom border found scanning down from (${clickX},${clickY})`);
         return null;
     }
 
@@ -119,7 +123,7 @@ function findIconAtPoint(
         }
     }
     if (leftBorder < 0) {
-        console.log(`[Detector] No left border found scanning left from (${clickX},${clickY})`);
+        debugLog(`[Detector] No left border found scanning left from (${clickX},${clickY})`);
         return null;
     }
 
@@ -134,7 +138,7 @@ function findIconAtPoint(
         }
     }
     if (rightBorder < 0) {
-        console.log(`[Detector] No right border found scanning right from (${clickX},${clickY})`);
+        debugLog(`[Detector] No right border found scanning right from (${clickX},${clickY})`);
         return null;
     }
 
@@ -167,17 +171,17 @@ function findIconAtPoint(
     // Validate: should be square-ish and within expected size range
     if (iconW < EXPECTED_ICON_SIZES.min || iconW > EXPECTED_ICON_SIZES.max ||
         iconH < EXPECTED_ICON_SIZES.min || iconH > EXPECTED_ICON_SIZES.max) {
-        console.log(`[Detector] Icon size ${iconW}x${iconH} outside expected range`);
+        debugLog(`[Detector] Icon size ${iconW}x${iconH} outside expected range`);
         return null;
     }
     if (Math.abs(iconW - iconH) > 4) {
-        console.log(`[Detector] Icon not square: ${iconW}x${iconH}`);
+        debugLog(`[Detector] Icon not square: ${iconW}x${iconH}`);
         return null;
     }
 
     const iconSize = Math.round((iconW + iconH) / 2);
 
-    console.log(`[Detector] Found icon at (${trueLeft},${trueTop}) size ${iconW}x${iconH} → iconSize=${iconSize}`);
+    debugLog(`[Detector] Found icon at (${trueLeft},${trueTop}) size ${iconW}x${iconH} → iconSize=${iconSize}`);
 
     return { left: trueLeft, top: trueTop, right: rightBorder, bottom: bottomBorder, iconSize };
 }
@@ -211,7 +215,7 @@ function measureGridSpacing(
             // Next icon left = x, this icon left = iconRight - iconSize + 1
             const thisLeft = iconRight - iconSize + 1;
             const gridSize = x - thisLeft;
-            console.log(`[Detector] Grid spacing measured: ${gridSize}px (gap at dx=${dx})`);
+            debugLog(`[Detector] Grid spacing measured: ${gridSize}px (gap at dx=${dx})`);
             if (gridSize >= EXPECTED_GRID_SIZES.min && gridSize <= EXPECTED_GRID_SIZES.max) {
                 return gridSize;
             }
@@ -220,7 +224,7 @@ function measureGridSpacing(
 
     // Fallback: estimate from icon size (grid ≈ iconSize + 3 at 100% scale)
     const estimated = iconSize + 3;
-    console.log(`[Detector] Grid spacing estimated from icon size: ${estimated}px`);
+    debugLog(`[Detector] Grid spacing estimated from icon size: ${estimated}px`);
     return estimated;
 }
 
@@ -283,7 +287,7 @@ function countBarExtent(
     }
 
     const totalSlots = leftCount + 1 + rightCount;
-    console.log(`[Detector] Bar extent: ${leftCount} left + anchor + ${rightCount} right = ${totalSlots} slots`);
+    debugLog(`[Detector] Bar extent: ${leftCount} left + anchor + ${rightCount} right = ${totalSlots} slots`);
     return { barLeft: leftMost, totalSlots };
 }
 
@@ -337,7 +341,7 @@ export function detectBarFromClick(isDebuff: boolean): DetectionResult {
 
     const clickX = mousePos.x;
     const clickY = mousePos.y;
-    console.log(`[Detector] Click-to-anchor at (${clickX}, ${clickY}), isDebuff=${isDebuff}`);
+    debugLog(`[Detector] Click-to-anchor at (${clickX}, ${clickY}), isDebuff=${isDebuff}`);
 
     // Capture a region around the click point
     const captureX = Math.max(0, clickX - CAPTURE_RADIUS);
@@ -352,7 +356,7 @@ export function detectBarFromClick(isDebuff: boolean): DetectionResult {
         return { success: false, region: null, confidence: 0, message: `Screen capture failed: ${e}` };
     }
 
-    console.log(`[Detector] Captured ${img.width}x${img.height} region at (${captureX},${captureY})`);
+    debugLog(`[Detector] Captured ${img.width}x${img.height} region at (${captureX},${captureY})`);
 
     // Click position relative to captured region
     const localX = clickX - captureX;
@@ -394,7 +398,7 @@ export function detectBarFromClick(isDebuff: boolean): DetectionResult {
         const p = { r: img.data[i], g: img.data[i + 1], b: img.data[i + 2] };
         if (isBorderFn(p.r, p.g, p.b)) {
             maxRows = 2;
-            console.log(`[Detector] Found second row at y+${gridSize}`);
+            debugLog(`[Detector] Found second row at y+${gridSize}`);
         }
     }
 

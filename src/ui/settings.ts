@@ -53,6 +53,9 @@ export function renderSettings(container: HTMLElement): void {
 
     html += '';
 
+    // Banner: stale calibration warning (top of settings, dismissible per session)
+    html += renderStaleCalibrationBanner(state.calibrationStale, state.calibrationStaleDismissed);
+
     // Section 1: Overlay Style
     html += renderOverlayStyleSection(state.overlayStyle);
 
@@ -85,6 +88,32 @@ export function renderSettings(container: HTMLElement): void {
 // =====================================================================
 // Section Renderers
 // =====================================================================
+
+function renderStaleCalibrationBanner(stale: boolean, dismissed: boolean): string {
+    if (!stale || dismissed) return '';
+    return `
+        <div id="stale-calibration-banner" style="
+            margin-bottom: 10px; padding: 10px 12px;
+            background: rgba(251,191,36,0.10);
+            border: 1px solid rgba(251,191,36,0.30);
+            border-radius: 6px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 11px; color: #fcd34d;
+        ">
+            <div style="flex:1;">
+                Your calibration is more than 7 days old. Click Detect to re-verify if anything looks wrong.
+            </div>
+            <button id="btn-dismiss-stale-banner" style="
+                padding: 4px 10px; font-size: 10px;
+                border: 1px solid rgba(251,191,36,0.4);
+                border-radius: 3px;
+                background: rgba(0,0,0,0.2);
+                color: #fcd34d;
+                cursor: pointer;
+            ">Dismiss</button>
+        </div>
+    `;
+}
 
 function renderOverlayStyleSection(current: OverlayStyle): string {
     const styles: Array<{ value: OverlayStyle; label: string; sublabel: string; enabled: boolean }> = [
@@ -747,6 +776,12 @@ collapsedSections['section-developer'] = true;
 // =====================================================================
 
 function wireEventHandlers(container: HTMLElement): void {
+    // Stale calibration banner — dismiss button
+    container.querySelector<HTMLButtonElement>('#btn-dismiss-stale-banner')?.addEventListener('click', () => {
+        store.dismissCalibrationStaleBanner();
+        renderSettings(container);
+    });
+
     // Overlay style cards
     container.querySelectorAll<HTMLElement>('.settings-style-card:not(.disabled)').forEach(card => {
         card.addEventListener('click', () => {
