@@ -277,11 +277,11 @@ function renderPanelPositionsSection(): string {
                 </div>
                 <div style="display:flex; align-items:center; gap:3px; margin-top:2px;">
                     <span style="font-size:9px; color:rgba(255,255,255,0.3); width:12px;">Y</span>
-                    <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="y" data-delta="-100">\u00AB</button>
+                    <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="y" data-delta="-100">\u21D1</button>
                     <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="y" data-delta="-10">\u2191</button>
                     <input type="number" class="settings-position-input" data-panel-pos="${panel.id}" data-axis="y" value="${ps.y}" style="width:50px;">
                     <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="y" data-delta="10">\u2193</button>
-                    <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="y" data-delta="100">\u00BB</button>
+                    <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="y" data-delta="100">\u21D3</button>
                 </div>
             </div>
         `;
