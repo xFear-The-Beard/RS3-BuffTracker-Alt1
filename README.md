@@ -2,7 +2,7 @@
 
 A combat buff/debuff tracker overlay for RuneScape 3, built for [Alt1 Toolkit](https://runeapps.org).
 
-Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuffs, and cooldowns with a customizable gauge overlay — no reliance on Alt1's broken BuffReader.
+Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuffs, and cooldowns with a customizable gauge overlay 
 
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 
