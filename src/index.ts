@@ -984,12 +984,12 @@ function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY
 
     // Binary bitmap dump — fires ONLY on read failures (empty or single-digit).
     // Skip clean multi-char reads to avoid noise. Counter resets on fresh detection.
-    // Limit 100 per session, gives ~100 failure samples per skeleton summon.
+    // Limit 500 per session, covers a full 60s skeleton cycle with margin.
     if (!(readDualTextTimer as any)._dumpCount) {
         (readDualTextTimer as any)._dumpCount = 0;
     }
     const readFailed = upperRead.rawStrict.length < 2 && upperRead.rawRelaxed.length < 2;
-    if (readFailed && (readDualTextTimer as any)._dumpCount < 100) {
+    if (readFailed && (readDualTextTimer as any)._dumpCount < 500) {
         (readDualTextTimer as any)._dumpCount++;
         const buf = lastBuffBuffer;
         const scale = gridSize / 30;
