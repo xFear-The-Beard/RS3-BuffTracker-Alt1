@@ -116,6 +116,8 @@ function renderStaleCalibrationBanner(stale: boolean, dismissed: boolean): strin
 }
 
 function renderOverlayStyleSection(current: OverlayStyle): string {
+    const state = store.getState();
+    const combatGaugePanel = state.panels['combat-gauge'];
     const styles: Array<{ value: OverlayStyle; label: string; sublabel: string; enabled: boolean }> = [
         { value: 'compact', label: 'A', sublabel: 'Compact', enabled: true },
         { value: 'classic', label: 'B', sublabel: 'Classic', enabled: true },
@@ -125,7 +127,22 @@ function renderOverlayStyleSection(current: OverlayStyle): string {
     ];
 
     let html = '<div class="settings-section">';
-    html += '<div class="settings-section-title">Overlay Style</div>';
+    // Title row: section name on the left, descriptive label + visibility
+    // toggle for the Combat Gauge overlay on the right. Mirror of the
+    // Combat Buffs Panel header below so the two top-level overlays have
+    // matching, discoverable show/hide controls.
+    html += `
+        <div class="settings-section-title" style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Overlay Style</span>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:10px; color:rgba(255,255,255,0.6); font-weight:normal;">Toggle Overlay On/Off</span>
+                <label class="settings-toggle-switch" title="Show or hide the Combat Gauge overlay">
+                    <input type="checkbox" data-panel-vis="combat-gauge" ${combatGaugePanel.visible ? 'checked' : ''}>
+                    <span class="settings-toggle-slider"></span>
+                </label>
+            </span>
+        </div>
+    `;
     html += '<div class="settings-style-grid">';
 
     for (const s of styles) {
@@ -259,14 +276,18 @@ function renderCombatBuffsSection(): string {
     // Master header: Combat Buffs panel visibility toggle. Surfaced here
     // so users can hide the overlay from where they're already looking
     // instead of having to find Panel Positions & Scale further down.
+    // Layout mirrors the Overlay Style header above.
     html += '<div class="settings-section">';
     html += `
         <div class="settings-section-title" style="display:flex; align-items:center; justify-content:space-between;">
             <span>Combat Buffs Panel</span>
-            <label class="settings-toggle-switch" title="Show or hide the Combat Buffs panel overlay">
-                <input type="checkbox" data-panel-vis="combat-buffs" ${combatBuffsPanel.visible ? 'checked' : ''}>
-                <span class="settings-toggle-slider"></span>
-            </label>
+            <span style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:10px; color:rgba(255,255,255,0.6); font-weight:normal;">Toggle Combat Buffs Panel On/Off</span>
+                <label class="settings-toggle-switch" title="Show or hide the Combat Buffs panel overlay">
+                    <input type="checkbox" data-panel-vis="combat-buffs" ${combatBuffsPanel.visible ? 'checked' : ''}>
+                    <span class="settings-toggle-slider"></span>
+                </label>
+            </span>
         </div>
     `;
     html += '</div>';
