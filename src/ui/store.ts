@@ -160,6 +160,11 @@ class Store {
         return () => this.listeners.delete(listener);
     }
 
+    /** Returns the current number of active subscribers. Used by the diagnostic heartbeat. */
+    getSubscriberCount(): number {
+        return this.listeners.size;
+    }
+
     private notify(): void {
         for (const listener of this.listeners) {
             listener(this.state);

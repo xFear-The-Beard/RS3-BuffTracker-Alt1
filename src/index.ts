@@ -56,6 +56,13 @@ let lastBuffBuffer: ImageData | null = null;
 /** Internal timer for Bloat: starts at 20.5s when first detected, counts down */
 let bloatTimer: { active: boolean; remaining: number; interval: ReturnType<typeof setInterval> | null } = { active: false, remaining: 0, interval: null };
 let readInterval: ReturnType<typeof setInterval> | null = null;
+
+// Diagnostic heartbeat state. Fires every 60s while debug mode is on, logs a single
+// line summarizing heap, subscribers, DOM size, session frames, cycle count, uptime.
+// Used to spot memory leaks and resource accumulation in long sessions.
+let diagInterval: ReturnType<typeof setInterval> | null = null;
+const APP_START_TIME = Date.now();
+const DIAG_INTERVAL_MS = 60000;
 let debugMode = getDebugModeEnabled();
 setDebugLogEnabled(debugMode);
 let debugPaused = false;
@@ -1451,6 +1458,47 @@ let isDemoMode = false;
 
 // --- Initialization ---
 
+/**
+ * Diagnostic heartbeat. Logs one line every DIAG_INTERVAL_MS while debug mode is on.
+ *
+ * Captures heap size, store subscriber count, debug log DOM size, session frames count,
+ * read cycle count, and uptime. Used to spot memory leaks and resource accumulation
+ * over long sessions. A single line per minute is cheap and gives a clear time series.
+ */
+function logDiagnosticSnapshot(): void {
+    if (!debugMode) return;
+
+    const uptime = Math.round((Date.now() - APP_START_TIME) / 1000);
+
+    // Chrome-specific perf API. Available in Alt1's Chromium browser.
+    // Falls back to "n/a" on browsers that don't expose it.
+    const memInfo = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+    const heap = memInfo
+        ? `${(memInfo.usedJSHeapSize / 1024 / 1024).toFixed(1)}MB`
+        : 'n/a';
+
+    const subs = store.getSubscriberCount();
+
+    const debugOutEl = document.getElementById('debug-output');
+    const dom = debugOutEl ? debugOutEl.childElementCount : 0;
+
+    const frames = sessionFrames.length;
+
+    log(`[Diag] uptime=${uptime}s cycles=${readCount} heap=${heap} sub=${subs} dom=${dom} frames=${frames}`, 'debug');
+}
+
+function startDiagnosticHeartbeat(): void {
+    if (diagInterval) return;
+    diagInterval = setInterval(logDiagnosticSnapshot, DIAG_INTERVAL_MS);
+}
+
+function stopDiagnosticHeartbeat(): void {
+    if (diagInterval) {
+        clearInterval(diagInterval);
+        diagInterval = null;
+    }
+}
+
 function init(): void {
     log('Initializing Buff Tracker v0.6.0 (overlay refactor)');
     log(`RS Scaling: ${getRsScaling()}`);
@@ -1479,14 +1527,17 @@ function init(): void {
         debugPaused = false;
         if (enabled) {
             injectDebugUI();
+            startDiagnosticHeartbeat();
         } else {
             removeDebugUI();
+            stopDiagnosticHeartbeat();
         }
     });
 
     // Inject debug UI if debug mode was persisted
     if (debugMode) {
         injectDebugUI();
+        startDiagnosticHeartbeat();
     }
 
     // Expose verboseDebug toggle on window for console access
