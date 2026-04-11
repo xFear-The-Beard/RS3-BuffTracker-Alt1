@@ -968,8 +968,24 @@ function readAndUpdate(): void {
         allEnemySlots = enemySlots;
         processEnemyDebuffs(enemySlots, styleDef.abilities.filter(a => a.source === 'enemy'));
 
-        if (debugMode && verboseDebug && enemySlots.length > 0) {
-            log(`Read ${enemySlots.length} enemy debuff slots`, 'debug');
+        if (debugMode && verboseDebug) {
+            const r = enemyReader.region;
+            log(
+                `Read ${enemySlots.length} enemy debuff slots ` +
+                `(region=${r.x},${r.y} cols=${r.maxColumns} rows=${r.maxRows} grid=${r.gridSize})`,
+                'debug',
+            );
+            // Zero-read diagnostic: dump the per-column border check so we
+            // can see whether the reader is capturing at the expected
+            // screen position and why every column is failing the border
+            // match. See scripts/test-enemy-padding.js for shape.
+            if (enemySlots.length === 0) {
+                const dump = enemyReader.debugBorderScan();
+                const summary = dump
+                    .map(e => `c${e.col}:${e.matchRatio === null ? 'NA' : (e.matchRatio * 100).toFixed(0) + '%'}${e.passed ? '*' : ''}`)
+                    .join(' ');
+                log(`[EnemyBorder] ${summary}`, 'debug');
+            }
         }
     }
 

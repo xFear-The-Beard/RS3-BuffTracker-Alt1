@@ -139,13 +139,107 @@ export class BuffBarReader {
             debugLog(`[Reader] Found ${slots.length} active slots on first scan`);
         }
 
-        // Update maxColumns based on what we actually found
-        if (slots.length > 0) {
+        // Update maxColumns based on what we actually found.
+        // Player bars legitimately contract as buffs expire, so shrinking
+        // the scan range to the rightmost-found column saves capture area.
+        // Enemy bars are different: they go through expandEnemyBarRegion
+        // which intentionally widens the scan to 12 cells left + 12 cells
+        // right of the anchor, so new debuffs that appear off-camera from
+        // the original hover still get caught. Applying the player-bar
+        // shrink here would collapse that padded range on the first
+        // successful read and defeat the purpose of the padding commit.
+        if (slots.length > 0 && !this.region.isEnemy) {
             const maxFoundCol = Math.max(...slots.map(s => s.column));
             this.region.maxColumns = Math.max(5, maxFoundCol + 2);
         }
 
         return slots;
+    }
+
+    /**
+     * Diagnostic: re-run the border check for every column in the scan
+     * range and return a per-column report. Used by the enemy-debuff
+     * debug log when a read returns 0 slots, so we can see whether the
+     * reader is capturing at the expected position and what the border
+     * match ratios look like. Not called from the hot path.
+     */
+    debugBorderScan(buffer?: ImageData): Array<{
+        col: number;
+        screenX: number;
+        matchRatio: number | null;
+        passed: boolean;
+    }> {
+        const rect = this.getCaptureRect();
+        if (!buffer) {
+            if (!window.alt1 || !alt1.permissionPixel) return [];
+            buffer = a1lib.capture(rect.x, rect.y, rect.width, rect.height);
+            if (!buffer) return [];
+        }
+
+        const out: Array<{
+            col: number;
+            screenX: number;
+            matchRatio: number | null;
+            passed: boolean;
+        }> = [];
+        for (let col = 0; col <= this.region.maxColumns; col++) {
+            const px = col * this.region.gridSize;
+            const py = 0;
+            const ratio = this.computeBorderMatchRatio(buffer, px, py);
+            out.push({
+                col,
+                screenX: this.region.x + px,
+                matchRatio: ratio,
+                passed: ratio !== null && ratio >= 0.4,
+            });
+        }
+        return out;
+    }
+
+    /**
+     * Internal counterpart to hasActiveBorder that returns the raw
+     * matched/sampled ratio instead of a pass/fail boolean. Lets the
+     * diagnostic surface ambiguous cases (e.g. a column with 30% match,
+     * which fails the 40% threshold but indicates the reader is close).
+     */
+    private computeBorderMatchRatio(buffer: ImageData, px: number, py: number): number | null {
+        const { gridSize, isDebuff, isEnemy } = this.region;
+        const w = buffer.width;
+        const data = buffer.data;
+
+        const BUFF_BORDER = { r: 90, g: 150, b: 25 };
+        const DEBUFF_BORDER = { r: 204, g: 0, b: 0 };
+        const TOLERANCE = 15;
+
+        const target = (isDebuff || isEnemy) ? DEBUFF_BORDER : BUFF_BORDER;
+        const isMatch = (r: number, g: number, b: number): boolean =>
+            Math.abs(r - target.r) <= TOLERANCE &&
+            Math.abs(g - target.g) <= TOLERANCE &&
+            Math.abs(b - target.b) <= TOLERANCE;
+
+        let matchCount = 0;
+        let sampleCount = 0;
+        const sampleStep = Math.max(1, Math.floor(gridSize / 10));
+
+        for (let dx = 0; dx < gridSize - 3 && px + dx < w; dx += sampleStep) {
+            const x = px + dx;
+            const y = py;
+            if (x < 0 || y < 0 || x >= buffer.width || y >= buffer.height) continue;
+            const i = (y * w + x) * 4;
+            sampleCount++;
+            if (isMatch(data[i], data[i + 1], data[i + 2])) matchCount++;
+        }
+        for (let dy = 2; dy < gridSize - 5 && py + dy < buffer.height; dy += sampleStep * 2) {
+            const x = px;
+            const y = py + dy;
+            if (x < 0 || y < 0 || x >= buffer.width || y >= buffer.height) continue;
+            const i = (y * w + x) * 4;
+            sampleCount++;
+            if (isMatch(data[i], data[i + 1], data[i + 2])) matchCount++;
+        }
+
+        if (sampleCount === 0) return null;
+        return matchCount / sampleCount;
     }
 
     /**
