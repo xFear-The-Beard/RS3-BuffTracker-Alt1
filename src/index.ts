@@ -366,7 +366,10 @@ function showOverlayStatus(): void {
         </div>
         <button id="btn-preview-toggle" class="overlay-preview-btn">Preview in Window</button>
     `;
-    panelsView.parentNode?.insertBefore(overlayStatus, panelsView.nextSibling);
+    // Insert BEFORE panelsView so the toggle button stays near the top of the
+    // window even when previewing is on and the panels expand below it.
+    // Otherwise the button gets pushed off the bottom of the visible area.
+    panelsView.parentNode?.insertBefore(overlayStatus, panelsView);
 
     // Preview toggle: temporarily render panels as HTML for visual reference
     let previewing = false;
