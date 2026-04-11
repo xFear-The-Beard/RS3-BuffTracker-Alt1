@@ -145,10 +145,18 @@ export class OverlayManager {
             // Master kill switch overrides per-panel visibility. Per-panel state
             // is preserved so the master toggle can restore the prior layout.
             if (state.masterOverlayHidden || !panelState.visible) {
-                // Clear overlay group for hidden panels
+                // Clear overlay group for hidden panels. The active render path
+                // freezes the group, so simply calling overLayClearGroup leaves
+                // the stale frozen image on screen until Alt1's frozen-overlay
+                // timer eventually expires (~10s). Mirror the active path's
+                // freeze/clear/refresh sequence so the empty state is pushed
+                // immediately and the image disappears the same tick the
+                // toggle is flipped.
                 try {
                     alt1.overLaySetGroup(panel.groupName);
+                    alt1.overLayFreezeGroup(panel.groupName);
                     alt1.overLayClearGroup(panel.groupName);
+                    alt1.overLayRefreshGroup(panel.groupName);
                 } catch {
                     // Ignore
                 }
