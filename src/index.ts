@@ -363,6 +363,7 @@ function showOverlayStatus(): void {
 
     // Preview toggle: temporarily render panels as HTML for visual reference
     let previewing = false;
+    let previewUnsubscribe: (() => void) | null = null;
     const previewBtn = document.getElementById('btn-preview-toggle');
     previewBtn?.addEventListener('click', () => {
         previewing = !previewing;
@@ -372,10 +373,15 @@ function showOverlayStatus(): void {
         if (previewing) {
             updatePanelVisibility();
             renderPanelsToHTML();
-            // Also subscribe to updates while previewing
-            store.subscribe(() => {
-                if (previewing) renderPanelsToHTML();
+            // Subscribe to store updates while previewing. Capture the unsubscribe
+            // handle so we can release it when preview is turned off — otherwise
+            // every toggle adds a new subscriber that never goes away.
+            previewUnsubscribe = store.subscribe(() => {
+                renderPanelsToHTML();
             });
+        } else if (previewUnsubscribe) {
+            previewUnsubscribe();
+            previewUnsubscribe = null;
         }
     });
 }
