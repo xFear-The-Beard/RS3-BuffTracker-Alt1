@@ -1189,7 +1189,7 @@ function processSlots(
         if (currentState.active) {
             // Layer 2: Miss counter grace — increment miss count each cycle ability is not seen
             abilityMissCount[def.id] = (abilityMissCount[def.id] || 0) + 1;
-            const graceMisses = def.type === 'stacking-buff' ? 25 : ABILITY_GRACE_MISSES; // 25 × 200ms = 5s for stacking
+            const graceMisses = def.type === 'stacking-buff' ? 5 : ABILITY_GRACE_MISSES; // 5 × 200ms = 1s for stacking — fast deactivation when player spends all stacks
             if (abilityMissCount[def.id] > graceMisses) {
                 // Ability disappeared — exceeded miss threshold. Start cooldown if applicable
                 if (def.type === 'ability' && def.cooldownDuration) {
