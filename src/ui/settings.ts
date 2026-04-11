@@ -295,7 +295,13 @@ function renderPanelPositionsSection(): string {
         const ps = state.panels[panel.id];
         html += `
             <div style="margin-bottom:6px;">
-                <div style="font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:3px;">${panel.label}</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:3px;">
+                    <span style="font-size:10px; color:rgba(255,255,255,0.5);">${panel.label}</span>
+                    <label class="settings-toggle-switch" title="Show or hide this panel">
+                        <input type="checkbox" data-panel-vis="${panel.id}" ${ps.visible ? 'checked' : ''}>
+                        <span class="settings-toggle-slider"></span>
+                    </label>
+                </div>
                 <div style="display:flex; align-items:center; gap:3px; flex-wrap:wrap;">
                     <span style="font-size:9px; color:rgba(255,255,255,0.3); width:12px;">X</span>
                     <button style="${nudgeBtnStyle}" data-nudge="${panel.id}" data-axis="x" data-delta="-100">\u00AB</button>
@@ -874,6 +880,15 @@ function wireEventHandlers(container: HTMLElement): void {
             } else {
                 store.setPanelPosition(panelId, current.x, value);
             }
+        });
+    });
+
+    // Panel visibility toggles
+    container.querySelectorAll<HTMLInputElement>('[data-panel-vis]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const panelId = checkbox.dataset.panelVis as PanelId;
+            if (!panelId) return;
+            store.setPanelVisible(panelId, checkbox.checked);
         });
     });
 
