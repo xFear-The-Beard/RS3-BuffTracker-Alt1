@@ -1,0 +1,9 @@
+# Forces users through one of the templates above instead of opening a blank issue.
+# To add a Discord (or other) link to the issue chooser screen, uncomment and edit
+# the contact_links block below.
+blank_issues_enabled: false
+
+# contact_links:
+#   - name: Discord
+#     url: https://discord.gg/your-invite-code
+#     about: Quick questions, install help, "is this normal?" — chat in real time.

@@ -83,6 +83,20 @@ Magic, Ranged, and Melee abilities are defined and tracked at the data layer (Su
 - Death Skulls cooldown tracking — needs action bar reading rather than buff bar matching.
 - Color tolerance auto-calibration — the current border detection uses a fixed RGB tolerance that may be tight for monitors with non-standard gamma or color profiles. Auto-calibration on first detection would make this more forgiving.
 
+## Bug Reports & Feedback
+
+Bugs and feature requests: file an issue on the **[Issues page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/issues)**. There are templates for both bug reports and feature requests — picking one will pre-fill the right fields.
+
+For tracking or detection bugs, the most useful thing you can attach is a debug log. To produce one:
+
+1. Open the plugin in Alt1
+2. Settings → Developer Settings → enable **Debug Mode**
+3. Reproduce the issue (let it run for a minute or two if possible)
+4. Click **Export Log** in the debug panel that appears at the bottom
+5. Drag and drop the downloaded `.log` file directly into the GitHub issue textbox
+
+GitHub supports `.log` file uploads up to 25 MB, which is far more than the plugin can produce. For visual or rendering bugs, screenshots dropped into the issue textbox work the same way (PNG, JPG, GIF up to 10 MB each).
+
 ## Building from Source
 
 ```bash

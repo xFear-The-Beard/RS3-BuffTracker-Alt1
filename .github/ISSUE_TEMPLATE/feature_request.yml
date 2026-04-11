@@ -1,0 +1,51 @@
+name: Feature Request
+description: Suggest a new ability, gauge style, panel, or other feature
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. This template helps capture the idea so it doesn't get lost.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you'd like to see
+      description: A clear description of the feature or change you're proposing.
+      placeholder: "Track Greater Sunshine on the Magic gauge with a dedicated prominent slot like Necromancy's Living Death."
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it'd be useful
+      description: What problem does it solve, or what does it improve?
+      placeholder: "Sunshine is the most important Magic ability to track, but it currently shows as just another timer in a generic row."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Roughly what area does this fall under?
+      options:
+        - New ability or buff to track
+        - New gauge style
+        - New panel (combat buffs / skilling / etc.)
+        - Existing gauge improvement
+        - Settings / configuration
+        - Performance
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Mockups, references, screenshots from other plugins, related features, anything else.
+      placeholder: "Optional"

@@ -1,0 +1,127 @@
+name: Bug Report
+description: Tracking, detection, or rendering issue with the plugin
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. The more detail you can share, the faster it can be tracked down.
+
+        For tracking or detection issues, attaching a debug log makes a huge difference. Instructions are in the relevant field below.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear, brief description of what went wrong.
+      placeholder: "Skeleton timer shows 49, then jumps to 34, then 19, then 25..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What should have happened instead?
+      placeholder: "The timer should count down monotonically from 60 to 0."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gauge-style
+    attributes:
+      label: Gauge style
+      description: Which gauge style are you using when this happens?
+      options:
+        - Compact (A)
+        - Classic (B)
+        - Modern (C)
+        - Themed (D)
+        - Themed Frames (E)
+        - Multiple / All
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: combat-style
+    attributes:
+      label: Combat style
+      description: Which combat style are you using?
+      options:
+        - Necromancy
+        - Magic
+        - Ranged
+        - Melee
+        - Not applicable
+    validations:
+      required: true
+
+  - type: input
+    id: ui-scale
+    attributes:
+      label: RS3 in-game Interface Scale
+      description: From RS3 Settings → Display → Interface Scale (default is 100%).
+      placeholder: "100%"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Windows 11 / Windows 10 / etc."
+    validations:
+      required: true
+
+  - type: input
+    id: alt1-version
+    attributes:
+      label: Alt1 version
+      description: From the About tab in Alt1 Settings. Optional but helpful if you have it.
+      placeholder: "1.6.x"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can someone else trigger this?
+      placeholder: |
+        1. Open the plugin in Alt1
+        2. Cast Skeleton Warrior on a target dummy
+        3. Watch the timer in the gauge
+    validations:
+      required: true
+
+  - type: textarea
+    id: debug-log
+    attributes:
+      label: Debug log (recommended for tracking and detection bugs)
+      description: |
+        For tracking or detection issues, a debug log is the single most useful thing you can attach. To produce one:
+
+        1. Open the plugin in Alt1
+        2. Settings → Developer Settings → enable **Debug Mode**
+        3. Reproduce the issue (let it run for a minute or two if possible)
+        4. Click **Export Log** in the debug panel that appears at the bottom
+        5. Drag and drop the downloaded `.log` file into the textbox below
+
+        GitHub supports `.log` files up to 25 MB, which is far more than the plugin can produce. If for some reason your file is larger, zip it first and attach the zip.
+      placeholder: "Drag and drop your .log file here, or paste log text directly."
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: |
+        For rendering or visual bugs, drag and drop screenshots into the textbox below.
+
+        Supported image types: PNG, JPG, GIF, WEBP, up to 10 MB each.
+      placeholder: "Drag and drop screenshots here."
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Notes, theories, related issues, anything else worth mentioning.
