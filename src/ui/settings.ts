@@ -253,7 +253,23 @@ function renderGaugeAbilitiesSection(combatStyle: CombatStyle): string {
 
 function renderCombatBuffsSection(): string {
     const state = store.getState();
+    const combatBuffsPanel = state.panels['combat-buffs'];
     let html = '';
+
+    // Master header: Combat Buffs panel visibility toggle. Surfaced here
+    // so users can hide the overlay from where they're already looking
+    // instead of having to find Panel Positions & Scale further down.
+    html += '<div class="settings-section">';
+    html += `
+        <div class="settings-section-title" style="display:flex; align-items:center; justify-content:space-between;">
+            <span>Combat Buffs Panel</span>
+            <label class="settings-toggle-switch" title="Show or hide the Combat Buffs panel overlay">
+                <input type="checkbox" data-panel-vis="combat-buffs" ${combatBuffsPanel.visible ? 'checked' : ''}>
+                <span class="settings-toggle-slider"></span>
+            </label>
+        </div>
+    `;
+    html += '</div>';
 
     for (const cat of COMBAT_BUFF_CATEGORIES) {
         const isCollapsed = collapsedSections[cat.id] !== false;
@@ -883,12 +899,17 @@ function wireEventHandlers(container: HTMLElement): void {
         });
     });
 
-    // Panel visibility toggles
+    // Panel visibility toggles. Multiple checkboxes can target the same panel
+    // (Combat Buffs Panel header + Panel Positions section), so on change we
+    // sync all matching checkboxes to keep the UI consistent without a re-render.
     container.querySelectorAll<HTMLInputElement>('[data-panel-vis]').forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             const panelId = checkbox.dataset.panelVis as PanelId;
             if (!panelId) return;
             store.setPanelVisible(panelId, checkbox.checked);
+            container.querySelectorAll<HTMLInputElement>(`[data-panel-vis="${panelId}"]`).forEach(other => {
+                if (other !== checkbox) other.checked = checkbox.checked;
+            });
         });
     });
 
