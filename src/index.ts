@@ -674,16 +674,40 @@ function onDetectConfirm(): void {
     if (step === 'waiting-buff-confirm') {
         handleDetectionResult(frozenDetectResult, 'buff');
         frozenDetectResult = null;
+        applyPartialCalibration();
         startHoverScan('debuff');
     } else if (step === 'waiting-debuff-confirm') {
         handleDetectionResult(frozenDetectResult, 'debuff');
         frozenDetectResult = null;
+        applyPartialCalibration();
         startHoverScan('enemy');
     } else if (step === 'waiting-enemy-confirm') {
         handleDetectionResult(frozenDetectResult, 'enemy');
         frozenDetectResult = null;
         finishDetection();
     }
+}
+
+/**
+ * Save the current calibration state and start the read loop, even if not all
+ * three bars have been detected yet. Called after each detect step's confirm
+ * so users who only want buff bar tracking can stop after step 1 and have
+ * the gauge work immediately. Idempotent — safe to call multiple times.
+ */
+function applyPartialCalibration(): void {
+    if (!buffReader && !debuffReader && !enemyReader) return;
+    saveCalibration(createCalibration(
+        buffReader?.region ?? null,
+        debuffReader?.region ?? null,
+        getRsScaling(),
+        enemyReader?.region ?? null,
+    ));
+    const parts: string[] = [];
+    if (buffReader) parts.push('Buffs');
+    if (debuffReader) parts.push('Debuffs');
+    if (enemyReader) parts.push('Enemy');
+    setStatus(`Reading: ${parts.join(' + ')}`, 'ok');
+    startReading(); // idempotent — has isRunning guard
 }
 
 function onDetectSkipDebuffs(): void {
