@@ -7,7 +7,7 @@ import { debugLog } from './debug';
  *
  * Instead of scanning the full screen for colored pixel clusters (which
  * produces false positives from equipment windows, chat text, etc.),
- * this detector asks the user to click on a buff icon. From that anchor
+ * this detector takes a click point on a buff icon. From that anchor
  * point, it validates the clicked region and expands outward to find
  * the full bar extent.
  *
@@ -59,7 +59,7 @@ function isDark(r: number, g: number, b: number): boolean {
 }
 
 /**
- * From a click point, find the edges of the icon square the user clicked on.
+ * From a click point, find the edges of the icon square at that point.
  * Walks outward in each direction until hitting a colored border, then
  * continues past the border to find the outer edge.
  *
@@ -324,7 +324,7 @@ function sampleBorderColor(
 /**
  * Detect a buff or debuff bar from a user click point.
  *
- * Call this after the user has clicked on a buff/debuff icon.
+ * Call this after a click is registered on a buff/debuff icon.
  * Reads mouse position, captures the region, validates, and expands
  * to find the full bar.
  */

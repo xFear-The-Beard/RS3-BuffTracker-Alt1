@@ -112,7 +112,7 @@ function injectDebugUI(): void {
             <button id="btn-record-session">Record Session</button>
         </div>
         <div id="captured-icons" style="display:none; margin-top:8px; padding:8px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1); border-radius:4px;">
-            <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:6px;">Captured icons from your buff bar (screenshot these for me):</div>
+            <div style="font-size:10px; color:rgba(255,255,255,0.4); margin-bottom:6px;">Captured icons from your buff bar (screenshot these for the issue tracker):</div>
             <div id="captured-icons-grid" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
         </div>
     `;
@@ -466,7 +466,7 @@ function initDetection(): void {
     // Try loading saved calibration, but verify position is still valid
     const saved = loadCalibration();
     // Surface a non-blocking banner if the saved calibration is more than 7 days old.
-    // The user can dismiss it for the session, but it will reappear next launch
+    // The banner can be dismissed for the session, but it will reappear next launch
     // if the calibration is still stale.
     store.setCalibrationStale(isCalibrationStale(saved));
     if (saved) {

@@ -52,7 +52,7 @@ export interface AppState {
     hiddenAbilities: string[];
     /** Set when a saved calibration is older than 7 days. Banner dismissed for the current session by setCalibrationStaleDismissed. */
     calibrationStale: boolean;
-    /** Whether the user has dismissed the stale-calibration banner this session. */
+    /** Whether the stale-calibration banner has been dismissed for this session. */
     calibrationStaleDismissed: boolean;
 }
 
