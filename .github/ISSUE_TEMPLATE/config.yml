@@ -1,9 +1,17 @@
 # Forces users through one of the templates above instead of opening a blank issue.
-# To add a Discord (or other) link to the issue chooser screen, uncomment and edit
-# the contact_links block below.
 blank_issues_enabled: false
 
-# contact_links:
+contact_links:
+  - name: 💡 Suggestions and ideas
+    url: https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/discussions/categories/ideas
+    about: Have an idea but not sure if it's a concrete feature request? Post it in Ideas for discussion first.
+  - name: 🙏 Questions and help
+    url: https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/discussions/categories/q-a
+    about: Install help, "is this normal?", "does this work with X?" — anything that doesn't need tracking as work.
+  - name: 💬 General feedback or chat
+    url: https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/discussions
+    about: Anything else — screenshots of your setup, casual conversation, or feedback that doesn't fit a template.
+# To add a Discord link to the issue chooser, uncomment and edit:
 #   - name: Discord
 #     url: https://discord.gg/your-invite-code
-#     about: Quick questions, install help, "is this normal?" — chat in real time.
+#     about: Real-time chat with other users.

@@ -4,12 +4,11 @@ import { readTimerFromPixels } from './digit-reader';
 import { debugLog } from './debug';
 
 /**
- * Custom BuffReader that works at any UI scale.
+ * Custom buff bar reader that works at any UI scale.
  *
- * Unlike the built-in alt1/buffs BuffReader which requires exact 27x27
- * template matches at 100% scale, this reader uses the BarRegion info
- * from our detector (which already knows the grid size and border color)
- * to read buffs at whatever scale the game is running at.
+ * Uses the BarRegion info from our detector (which already knows the grid
+ * size and border color) to read buffs at whatever scale the game is
+ * running at, instead of requiring a fixed 27x27 template match at 100%.
  */
 export class BuffBarReader {
     region: BarRegion;

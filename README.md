@@ -47,9 +47,7 @@ Detection positions are saved between sessions. You only need to re-detect if yo
 
 ## How It Works
 
-The plugin reads your buff bar using Alt1's screen capture and matches each icon slot against a library of known ability icons. Timers and stack counts are read directly from the icon text using a built-in digit reader — no dependency on Alt1's OCR or BuffReader.
-
-It works with the current RS3 interface (post-January 2026 UI update) and handles the aliased font changes that broke most existing buff tracking plugins.
+The plugin reads your buff bar using Alt1's screen capture and matches each icon slot against a library of known ability icons. Timers and stack counts are read directly from the icon text using a built-in digit reader.
 
 ## Tracked Abilities
 
@@ -83,9 +81,13 @@ Magic, Ranged, and Melee abilities are defined and tracked at the data layer (Su
 - Death Skulls cooldown tracking — needs action bar reading rather than buff bar matching.
 - Color tolerance auto-calibration — the current border detection uses a fixed RGB tolerance that may be tight for monitors with non-standard gamma or color profiles. Auto-calibration on first detection would make this more forgiving.
 
-## Bug Reports & Feedback
+## Bug Reports, Suggestions & Feedback
 
-Bugs and feature requests: file an issue on the **[Issues page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/issues)**. There are templates for both bug reports and feature requests — picking one will pre-fill the right fields.
+There are two places to give feedback:
+
+**🐛 Bug reports** → [Issues page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/issues). There are templates for both bug reports and feature requests — picking one will pre-fill the right fields.
+
+**💡 Suggestions, questions, screenshots, or general feedback** → [Discussions page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/discussions). Less formal than an issue, no template needed. Categories cover Ideas, Q&A, Show and tell, and General. The pinned welcome post explains where things go.
 
 For tracking or detection bugs, the most useful thing you can attach is a debug log. To produce one:
 
@@ -93,7 +95,7 @@ For tracking or detection bugs, the most useful thing you can attach is a debug 
 2. Settings → Developer Settings → enable **Debug Mode**
 3. Reproduce the issue (let it run for a minute or two if possible)
 4. Click **Export Log** in the debug panel that appears at the bottom
-5. Drag and drop the downloaded `.log` file directly into the GitHub issue textbox
+5. Drag and drop the downloaded `.log` file directly into the GitHub issue or discussion textbox
 
 GitHub supports `.log` file uploads up to 25 MB, which is far more than the plugin can produce. For visual or rendering bugs, screenshots dropped into the issue textbox work the same way (PNG, JPG, GIF up to 10 MB each).
 
