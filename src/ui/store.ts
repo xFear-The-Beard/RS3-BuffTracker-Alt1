@@ -108,8 +108,41 @@ function savePanelData(panels: Record<PanelId, PanelState>, overlayStyle: Overla
 function createDefaultPanels(): Record<PanelId, PanelState> {
     return {
         'combat-gauge': { visible: true, x: 100, y: 100 },
-        'combat-buffs': { visible: true, x: 100, y: 450 },
+        // Default off until the combat buffs panel is fully wired —
+        // shipping it visible-by-default would surface an empty/static
+        // overlay to fresh users with nothing to interact with.
+        'combat-buffs': { visible: false, x: 100, y: 450 },
     };
+}
+
+/**
+ * Read the saved combat style from user settings, validating it against
+ * the four known styles before returning. Falls back to 'necromancy' if
+ * nothing is saved or the saved value is unrecognised (e.g. corrupted
+ * localStorage or a future style that doesn't exist yet on this build).
+ */
+function loadCombatStyle(): CombatStyle {
+    const saved = loadUserSetting('combatStyle');
+    if (saved === 'necromancy' || saved === 'magic' || saved === 'ranged' || saved === 'melee') {
+        return saved;
+    }
+    return 'necromancy';
+}
+
+/**
+ * Read the saved combat-buff tracking modes from user settings. Returns
+ * an empty object on parse failure so applyDefaultBuffModes can fill it
+ * in from the registry defaults at startup.
+ */
+function loadCombatBuffTracking(): Record<string, BuffTrackMode> {
+    try {
+        const raw = loadUserSetting('combatBuffTracking');
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') return parsed;
+        }
+    } catch { /* ignore */ }
+    return {};
 }
 
 /**
@@ -124,7 +157,7 @@ class Store {
         const defaultPanels = createDefaultPanels();
 
         this.state = {
-            combatStyle: 'necromancy',
+            combatStyle: loadCombatStyle(),
             autoDetectStyle: true,
             abilities: {},
             isReading: false,
@@ -132,7 +165,7 @@ class Store {
             panels: saved.panels || defaultPanels,
             masterOverlayHidden: saved.masterOverlayHidden ?? false,
             overlayStyle: saved.overlayStyle || 'modern',
-            combatBuffTracking: {},
+            combatBuffTracking: loadCombatBuffTracking(),
             noSoulboundLantern: loadUserSetting('noSoulboundLantern') === 'true',
             overlayScale: parseFloat(loadUserSetting('overlayScale') || '1.0') || 1.0,
             hiddenAbilities: JSON.parse(loadUserSetting('hiddenAbilities') || '[]'),
@@ -192,11 +225,12 @@ class Store {
     }
 
     /**
-     * Update combat style.
+     * Update combat style. Persists across sessions via user settings.
      */
     setCombatStyle(style: CombatStyle): void {
         if (this.state.combatStyle !== style) {
             this.state = { ...this.state, combatStyle: style };
+            saveUserSetting('combatStyle', style);
             this.notify();
         }
     }
@@ -328,7 +362,8 @@ class Store {
     }
 
     /**
-     * Set buff tracking mode for a specific ability.
+     * Set buff tracking mode for a specific ability. Persists across
+     * sessions so users don't have to re-disable buffs every restart.
      */
     setBuffTrackMode(id: string, mode: BuffTrackMode): void {
         this.state = {
@@ -338,6 +373,7 @@ class Store {
                 [id]: mode,
             },
         };
+        saveUserSetting('combatBuffTracking', JSON.stringify(this.state.combatBuffTracking));
         this.notify();
     }
 

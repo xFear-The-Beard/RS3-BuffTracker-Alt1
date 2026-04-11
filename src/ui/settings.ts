@@ -60,7 +60,7 @@ export function renderSettings(container: HTMLElement): void {
     html += renderOverlayStyleSection(state.overlayStyle);
 
     // Section 2: Combat Style
-    html += renderCombatStyleSection(state.combatStyle, state.autoDetectStyle);
+    html += renderCombatStyleSection(state.combatStyle);
 
     // Section 3: Combat Gauge - Ability Toggles
     html += renderGaugeAbilitiesSection(state.combatStyle);
@@ -162,7 +162,7 @@ function renderOverlayStyleSection(current: OverlayStyle): string {
     return html;
 }
 
-function renderCombatStyleSection(current: CombatStyle, autoDetect: boolean): string {
+function renderCombatStyleSection(current: CombatStyle): string {
     const styleColors: Record<CombatStyle, string> = {
         necromancy: '#a78bfa',
         magic: '#fbbf24',
@@ -188,15 +188,6 @@ function renderCombatStyleSection(current: CombatStyle, autoDetect: boolean): st
     }
 
     html += '</div>';
-
-    // Auto-detect toggle
-    html += `
-        <label class="settings-checkbox-row">
-            <input type="checkbox" class="settings-checkbox" data-setting="auto-detect" ${autoDetect ? 'checked' : ''}>
-            <span class="settings-checkbox-label">Auto-detect combat style</span>
-        </label>
-    `;
-
     html += '</div>';
     return html;
 }
@@ -847,14 +838,6 @@ function wireEventHandlers(container: HTMLElement): void {
             }
         });
     });
-
-    // Auto-detect checkbox
-    const autoDetectCb = container.querySelector<HTMLInputElement>('[data-setting="auto-detect"]');
-    if (autoDetectCb) {
-        autoDetectCb.addEventListener('change', () => {
-            // Future feature — auto-detect combat style
-        });
-    }
 
     // Soulbound Lantern checkbox
     const lanternCb = container.querySelector<HTMLInputElement>('[data-setting="noSoulboundLantern"]');
