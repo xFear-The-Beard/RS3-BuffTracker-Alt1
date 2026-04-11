@@ -20,6 +20,9 @@ export interface BarRegion {
     isEnemy?: boolean;
     /** Detected border color (averaged from captured pixels) */
     borderColor: RGBColor;
+    /** Set after expandEnemyBarRegion has applied symmetric padding around the
+     *  anchor. Persists into saved calibration so a reload does not double-pad. */
+    _paddingApplied?: boolean;
 }
 
 /**

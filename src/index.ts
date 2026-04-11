@@ -1,5 +1,5 @@
 import * as a1lib from 'alt1';
-import { detectBars, detectBar, detectBarFromClick, getRsScaling } from './lib/detector';
+import { detectBars, detectBar, detectBarFromClick, expandEnemyBarRegion, getRsScaling } from './lib/detector';
 import { BuffBarReader, compareBuffIcons } from './lib/reader';
 import { readUpperTimerFromPixels } from './lib/digit-reader-upper';
 import { loadCalibration, saveCalibration, clearCalibration, createCalibration, isCalibrationStale } from './lib/calibrator';
@@ -530,6 +530,10 @@ function initDetection(): void {
                     log(`Calibration check enemy (${saved.enemy.x},${saved.enemy.y}): px0=R${r}G${g}B${b} valid=${enemyValid}`);
                     if (enemyValid) {
                         saved.enemy.isEnemy = true;
+                        // Idempotent — skipped if the saved region was already padded
+                        // when it was originally written. Required for users with
+                        // calibration data from before this fix landed.
+                        expandEnemyBarRegion(saved.enemy);
                         enemyReader = new BuffBarReader(saved.enemy);
                         log(`Enemy debuff bar verified at (${saved.enemy.x}, ${saved.enemy.y})`);
                     }
@@ -820,9 +824,15 @@ function finishDetection(): void {
 
 function handleDetectionResult(result: DetectionResult, mode: 'buff' | 'debuff' | 'enemy'): void {
     if (result.success && result.region) {
-        const reader = new BuffBarReader(result.region);
         if (mode === 'enemy') {
             result.region.isEnemy = true;
+            // Symmetric scan-area expansion around the anchor — see expandEnemyBarRegion
+            // for the rationale. Must run BEFORE the BuffBarReader is constructed so
+            // the reader sees the padded region from its first read cycle.
+            expandEnemyBarRegion(result.region);
+        }
+        const reader = new BuffBarReader(result.region);
+        if (mode === 'enemy') {
             enemyReader = reader;
         } else if (mode === 'debuff') {
             debuffReader = reader;
