@@ -342,6 +342,70 @@ function setStatus(msg: string, level: 'ok' | 'warn' | 'error' | 'info' = 'info'
     log(msg, level === 'ok' ? 'info' : level);
 }
 
+/**
+ * Inject the "Hide All Overlays" master kill switch into the #status bar.
+ *
+ * Always visible (status bar shows on both the main panels view and the
+ * Settings view), placed far right. Slider checked = all overlays hidden,
+ * regardless of individual panel visibility. Per-panel visible state is
+ * preserved so flipping the slider back unchecked restores exactly what
+ * was visible before — panels that were individually hidden stay hidden,
+ * panels that were on come back on.
+ */
+function installMasterOverlayToggle(): void {
+    const statusBar = document.getElementById('status');
+    if (!statusBar) return;
+
+    // Convert the status bar into a flex row so the toggle can right-align
+    // without disturbing the existing dot+text markup.
+    statusBar.style.display = 'flex';
+    statusBar.style.alignItems = 'center';
+    statusBar.style.justifyContent = 'space-between';
+    statusBar.style.gap = '10px';
+
+    // Group the original dot+text together on the left so they continue to
+    // behave as a single status indicator unit.
+    const dotEl = document.getElementById('status-dot');
+    const textEl = document.getElementById('status-text');
+    if (dotEl && textEl && dotEl.parentElement === statusBar) {
+        const leftGroup = document.createElement('div');
+        leftGroup.style.cssText = 'display:flex; align-items:center; gap:6px; flex:1; min-width:0;';
+        statusBar.insertBefore(leftGroup, dotEl);
+        leftGroup.appendChild(dotEl);
+        leftGroup.appendChild(textEl);
+    }
+
+    // Right side: descriptive label + master kill-switch slider.
+    const rightGroup = document.createElement('div');
+    rightGroup.style.cssText = 'display:flex; align-items:center; gap:8px; flex-shrink:0;';
+    rightGroup.innerHTML = `
+        <span style="font-size:10px; color:rgba(255,255,255,0.6);">Hide All Overlays On/Off</span>
+        <label class="settings-toggle-switch" title="Master kill switch — hide all overlay panels at once. Per-panel state is remembered.">
+            <input type="checkbox" id="master-overlay-toggle" ${store.getState().masterOverlayHidden ? 'checked' : ''}>
+            <span class="settings-toggle-slider"></span>
+        </label>
+    `;
+    statusBar.appendChild(rightGroup);
+
+    const checkbox = document.getElementById('master-overlay-toggle') as HTMLInputElement | null;
+    if (!checkbox) return;
+
+    checkbox.addEventListener('change', () => {
+        store.setMasterOverlayHidden(checkbox.checked);
+        // In browser/HTML mode renderPanelsToHTML is the subscriber that
+        // updates display style. In Alt1 mode the overlay-manager subscriber
+        // handles it. Either way the store notify above triggers them.
+    });
+
+    // Keep the checkbox in sync if state is loaded from storage or changed
+    // from elsewhere (currently nothing else mutates this, but future-proof).
+    store.subscribe((state) => {
+        if (checkbox.checked !== state.masterOverlayHidden) {
+            checkbox.checked = state.masterOverlayHidden;
+        }
+    });
+}
+
 // --- Overlay Status (Alt1 mode) ---
 
 /**
@@ -1417,8 +1481,11 @@ function updatePanelVisibility(): void {
     const gaugeEl = document.getElementById('panel-combat-gauge');
     const buffsEl = document.getElementById('panel-combat-buffs');
 
-    if (gaugeEl) gaugeEl.style.display = state.panels['combat-gauge'].visible ? '' : 'none';
-    if (buffsEl) buffsEl.style.display = state.panels['combat-buffs'].visible ? '' : 'none';
+    // Master kill switch overrides per-panel visibility. Per-panel state is
+    // preserved so flipping master back to false restores the prior layout.
+    const hideAll = state.masterOverlayHidden;
+    if (gaugeEl) gaugeEl.style.display = (!hideAll && state.panels['combat-gauge'].visible) ? '' : 'none';
+    if (buffsEl) buffsEl.style.display = (!hideAll && state.panels['combat-buffs'].visible) ? '' : 'none';
 
     // If settings panel is open, refresh it to reflect any state changes
     if (settingsOpen) {
@@ -1441,9 +1508,15 @@ function renderPanelsToHTML(): void {
         gaugeRenderer = createGaugeRenderer(state.overlayStyle);
     }
 
+    // Master kill switch — when hidden, skip rendering both panels entirely.
+    const hideAll = state.masterOverlayHidden;
+    const showGauge = !hideAll && state.panels['combat-gauge'].visible;
+    const showBuffs = !hideAll && state.panels['combat-buffs'].visible;
+
     // Panel 1: Combat Gauge — use canvas rendering for real icons
     const gaugeEl = document.getElementById('panel-combat-gauge');
-    if (gaugeEl && state.panels['combat-gauge'].visible) {
+    if (gaugeEl) gaugeEl.style.display = showGauge ? '' : 'none';
+    if (gaugeEl && showGauge) {
         const canvas = document.createElement('canvas');
         gaugeRenderer.renderToCanvas(canvas, state, styleDef);
 
@@ -1474,7 +1547,8 @@ function renderPanelsToHTML(): void {
 
     // Panel 2: Combat Buffs
     const buffsEl = document.getElementById('panel-combat-buffs');
-    if (buffsEl && state.panels['combat-buffs'].visible) {
+    if (buffsEl) buffsEl.style.display = showBuffs ? '' : 'none';
+    if (buffsEl && showBuffs) {
         combatBuffsRenderer.renderToHTML(buffsEl, state);
     }
 
@@ -1546,6 +1620,9 @@ function init(): void {
     document.getElementById('btn-calibrate')?.addEventListener('click', onCalibrateClick);
     document.getElementById('btn-settings')?.addEventListener('click', onSettingsClick);
     document.getElementById('btn-settings-back')?.addEventListener('click', closeSettings);
+
+    // Inject the master "Hide All Overlays" toggle into the status bar
+    installMasterOverlayToggle();
 
     // Register debug mode toggle callback
     setDebugModeToggleCallback((enabled: boolean) => {

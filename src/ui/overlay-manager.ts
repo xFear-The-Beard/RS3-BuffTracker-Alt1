@@ -142,7 +142,9 @@ export class OverlayManager {
         for (const panel of this.panels) {
             const panelState = state.panels[panel.id];
 
-            if (!panelState.visible) {
+            // Master kill switch overrides per-panel visibility. Per-panel state
+            // is preserved so the master toggle can restore the prior layout.
+            if (state.masterOverlayHidden || !panelState.visible) {
                 // Clear overlay group for hidden panels
                 try {
                     alt1.overLaySetGroup(panel.groupName);

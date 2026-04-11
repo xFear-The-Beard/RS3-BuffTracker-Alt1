@@ -40,6 +40,8 @@ export interface AppState {
     lastReadTime: number;
     // Panel management
     panels: Record<PanelId, PanelState>;
+    /** Master kill switch — when true, ALL overlays are hidden regardless of per-panel visibility. Per-panel visible state is preserved so flipping this back to false restores exactly what was visible before. */
+    masterOverlayHidden: boolean;
     overlayStyle: OverlayStyle;
     combatBuffTracking: Record<string, BuffTrackMode>;
     // User settings
@@ -79,6 +81,7 @@ function saveUserSetting(key: string, value: string): void {
 interface SavedPanelData {
     panels?: Record<PanelId, PanelState>;
     overlayStyle?: OverlayStyle;
+    masterOverlayHidden?: boolean;
 }
 
 function loadPanelData(): SavedPanelData {
@@ -93,9 +96,9 @@ function loadPanelData(): SavedPanelData {
     return {};
 }
 
-function savePanelData(panels: Record<PanelId, PanelState>, overlayStyle: OverlayStyle): void {
+function savePanelData(panels: Record<PanelId, PanelState>, overlayStyle: OverlayStyle, masterOverlayHidden: boolean): void {
     try {
-        const data: SavedPanelData = { panels, overlayStyle };
+        const data: SavedPanelData = { panels, overlayStyle, masterOverlayHidden };
         localStorage.setItem(PANELS_STORAGE_KEY, JSON.stringify(data));
     } catch {
         // Ignore write errors
@@ -127,6 +130,7 @@ class Store {
             isReading: false,
             lastReadTime: 0,
             panels: saved.panels || defaultPanels,
+            masterOverlayHidden: saved.masterOverlayHidden ?? false,
             overlayStyle: saved.overlayStyle || 'modern',
             combatBuffTracking: {},
             noSoulboundLantern: loadUserSetting('noSoulboundLantern') === 'true',
@@ -172,7 +176,19 @@ class Store {
     }
 
     private persistPanels(): void {
-        savePanelData(this.state.panels, this.state.overlayStyle);
+        savePanelData(this.state.panels, this.state.overlayStyle, this.state.masterOverlayHidden);
+    }
+
+    /**
+     * Master kill switch — hides ALL overlays without touching per-panel visibility.
+     * When flipped back to false, each panel resumes whatever individual state it had.
+     */
+    setMasterOverlayHidden(hidden: boolean): void {
+        if (this.state.masterOverlayHidden !== hidden) {
+            this.state = { ...this.state, masterOverlayHidden: hidden };
+            this.persistPanels();
+            this.notify();
+        }
     }
 
     /**
