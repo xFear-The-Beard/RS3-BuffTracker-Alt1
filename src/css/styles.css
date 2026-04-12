@@ -98,6 +98,34 @@ html, body {
     background: rgba(255, 255, 255, 0.15);
 }
 
+#controls-redetect {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+#controls-redetect button {
+    flex: 1;
+    padding: 3px 4px;
+    font-size: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+#controls-redetect button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#controls-redetect button:active {
+    background: rgba(255, 255, 255, 0.12);
+}
+
 /* --- Gauge Header --- */
 
 .gauge-header {

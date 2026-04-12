@@ -570,8 +570,10 @@ function initDetection(): void {
 let detectStep: 'idle' | 'scanning-buff' | 'waiting-buff-confirm' | 'scanning-debuff' | 'waiting-debuff-confirm' | 'scanning-enemy' | 'waiting-enemy-confirm' = 'idle';
 let detectPollInterval: ReturnType<typeof setInterval> | null = null;
 let frozenDetectResult: import('./lib/types').DetectionResult | null = null;
+let singleDetectMode: 'buff' | 'debuff' | 'enemy' | null = null;
 
 function runDetection(): void {
+    singleDetectMode = null;
     stopReading();
     buffReader = null;
     debuffReader = null;
@@ -581,6 +583,16 @@ function runDetection(): void {
 
     // Start the hover-scan flow: buff → debuff → enemy target
     startHoverScan('buff');
+}
+
+function runSingleDetect(mode: 'buff' | 'debuff' | 'enemy'): void {
+    singleDetectMode = mode;
+    // Clear only the targeted reader, keep the others intact
+    if (mode === 'buff') buffReader = null;
+    else if (mode === 'debuff') debuffReader = null;
+    else { enemyReader = null; if (bloatTimer.interval) { clearInterval(bloatTimer.interval); bloatTimer.interval = null; } bloatTimer.active = false; bloatTimer.remaining = 0; }
+
+    startHoverScan(mode);
 }
 
 function startHoverScan(mode: 'buff' | 'debuff' | 'enemy'): void {
@@ -744,6 +756,18 @@ function onDetectConfirm(): void {
     }
 
     const step = detectStep;
+
+    // Single bar re-detection: confirm this one bar and finish
+    if (singleDetectMode) {
+        handleDetectionResult(frozenDetectResult, singleDetectMode);
+        frozenDetectResult = null;
+        singleDetectMode = null;
+        removeDetectPrompt();
+        applyPartialCalibration();
+        return;
+    }
+
+    // Full 3-step flow
     if (step === 'waiting-buff-confirm') {
         handleDetectionResult(frozenDetectResult, 'buff');
         frozenDetectResult = null;
@@ -796,8 +820,10 @@ function onDetectSkipEnemy(): void {
 }
 
 function onDetectCancel(): void {
+    singleDetectMode = null;
     removeDetectPrompt();
-    setStatus('Detection cancelled.', 'info');
+    if (detectPollInterval) { clearInterval(detectPollInterval); detectPollInterval = null; }
+    applyPartialCalibration();
     log('Detection cancelled by user');
 }
 
@@ -1646,6 +1672,9 @@ function init(): void {
     // Wire up buttons
     document.getElementById('btn-detect')?.addEventListener('click', onDetectClick);
     document.getElementById('btn-calibrate')?.addEventListener('click', onCalibrateClick);
+    document.getElementById('btn-detect-buff')?.addEventListener('click', () => runSingleDetect('buff'));
+    document.getElementById('btn-detect-debuff')?.addEventListener('click', () => runSingleDetect('debuff'));
+    document.getElementById('btn-detect-enemy')?.addEventListener('click', () => runSingleDetect('enemy'));
     document.getElementById('btn-settings')?.addEventListener('click', onSettingsClick);
     document.getElementById('btn-settings-back')?.addEventListener('click', closeSettings);
 
