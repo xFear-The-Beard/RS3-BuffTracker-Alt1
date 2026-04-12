@@ -3,7 +3,7 @@
  *
  * Reads white pixel patterns from the buff bar and matches them against
  * known digit templates using column-based character segmentation.
- * No Alt1 OCR dependency — reads pixels directly.
+ * No Alt1 OCR dependency - reads pixels directly.
  *
  * Uses a dual-threshold approach: tries the strict threshold (180) first,
  * then retries with a relaxed threshold (150) if the result is shorter.
@@ -211,7 +211,7 @@ function matchTemplates(
                 x++;
             }
         } else {
-            // No match at this position — advance past it
+            // No match at this position - advance past it
             x++;
         }
     }

@@ -233,7 +233,7 @@ function renderGaugeAbilitiesSection(combatStyle: CombatStyle): string {
             `;
         }
 
-        // Conjures (necromancy) — now part of abilities array
+        // Conjures (necromancy) - now part of abilities array
         const conjureIds = ['skeleton', 'zombie', 'ghost', 'phantom'];
         const conjureAbilities = styleDef.abilities.filter(a => conjureIds.includes(a.id));
         if (conjureAbilities.length > 0) {
@@ -736,7 +736,7 @@ function renderThreeWayToggle(id: string, name: string, mode: BuffTrackMode): st
 // Developer Settings Section
 // =====================================================================
 
-/** Callback for when debug mode is toggled — set by index.ts */
+/** Callback for when debug mode is toggled - set by index.ts */
 let onDebugModeToggle: ((enabled: boolean) => void) | null = null;
 
 /** Register the debug mode toggle callback */
@@ -744,7 +744,7 @@ export function setDebugModeToggleCallback(cb: (enabled: boolean) => void): void
     onDebugModeToggle = cb;
 }
 
-/** Debug mode state — per-session only, never auto-enabled from localStorage */
+/** Debug mode state - per-session only, never auto-enabled from localStorage */
 let debugModeSessionState = false;
 
 /** Read current debug mode state for rendering */
@@ -780,7 +780,7 @@ function renderDeveloperSettingsSection(): string {
         `;
 
         if (debugEnabled) {
-            html += '<div class="settings-hint" style="color: rgba(255,100,100,0.7);">Debug mode active — log panel and dev tools visible below the main UI.</div>';
+            html += '<div class="settings-hint" style="color: rgba(255,100,100,0.7);">Debug mode active - log panel and dev tools visible below the main UI.</div>';
 
             // Verbose debug toggle
             const verboseEnabled = typeof (window as any).verboseDebug === 'boolean' && (window as any).verboseDebug;
@@ -810,7 +810,7 @@ collapsedSections['section-developer'] = true;
 // =====================================================================
 
 function wireEventHandlers(container: HTMLElement): void {
-    // Stale calibration banner — dismiss button
+    // Stale calibration banner - dismiss button
     container.querySelector<HTMLButtonElement>('#btn-dismiss-stale-banner')?.addEventListener('click', () => {
         store.dismissCalibrationStaleBanner();
         renderSettings(container);

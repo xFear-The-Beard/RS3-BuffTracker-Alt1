@@ -193,11 +193,11 @@ function stopAndExportSession(): void {
     a.download = `session-recording-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    log(`Session recording saved — ${sessionFrames.length} frames`, 'info');
+    log(`Session recording saved - ${sessionFrames.length} frames`, 'info');
 }
 
 /**
- * Wire the Capture Buff Icons button (complex — extracted from init).
+ * Wire the Capture Buff Icons button (complex - extracted from init).
  */
 function wireCaptureIconsButton(): void {
     document.getElementById('btn-capture-icons')?.addEventListener('click', () => {
@@ -349,7 +349,7 @@ function setStatus(msg: string, level: 'ok' | 'warn' | 'error' | 'info' = 'info'
  * Settings view), placed far right. Slider checked = all overlays hidden,
  * regardless of individual panel visibility. Per-panel visible state is
  * preserved so flipping the slider back unchecked restores exactly what
- * was visible before — panels that were individually hidden stay hidden,
+ * was visible before - panels that were individually hidden stay hidden,
  * panels that were on come back on.
  */
 function installMasterOverlayToggle(): void {
@@ -380,7 +380,7 @@ function installMasterOverlayToggle(): void {
     rightGroup.style.cssText = 'display:flex; align-items:center; gap:8px; flex-shrink:0;';
     rightGroup.innerHTML = `
         <span style="font-size:10px; color:rgba(255,255,255,0.6);">Hide All Overlays On/Off</span>
-        <label class="settings-toggle-switch" title="Master kill switch — hide all overlay panels at once. Per-panel state is remembered.">
+        <label class="settings-toggle-switch" title="Master kill switch - hide all overlay panels at once. Per-panel state is remembered.">
             <input type="checkbox" id="master-overlay-toggle" ${store.getState().masterOverlayHidden ? 'checked' : ''}>
             <span class="settings-toggle-slider"></span>
         </label>
@@ -448,7 +448,7 @@ function showOverlayStatus(): void {
             updatePanelVisibility();
             renderPanelsToHTML();
             // Subscribe to store updates while previewing. Capture the unsubscribe
-            // handle so we can release it when preview is turned off — otherwise
+            // handle so we can release it when preview is turned off - otherwise
             // every toggle adds a new subscriber that never goes away.
             previewUnsubscribe = store.subscribe(() => {
                 renderPanelsToHTML();
@@ -519,7 +519,7 @@ function initDetection(): void {
                 log(`Debuffs bar verified at (${saved.debuffs.x}, ${saved.debuffs.y})`);
             }
 
-            // Enemy debuff region — validate with red border check (same as debuffs)
+            // Enemy debuff region - validate with red border check (same as debuffs)
             if (saved.enemy && window.alt1 && alt1.permissionPixel) {
                 try {
                     const testImg = a1lib.captureHold(
@@ -532,7 +532,7 @@ function initDetection(): void {
                     log(`Calibration check enemy (${saved.enemy.x},${saved.enemy.y}): px0=R${r}G${g}B${b} valid=${enemyValid}`);
                     if (enemyValid) {
                         saved.enemy.isEnemy = true;
-                        // Idempotent — skipped if the saved region was already padded
+                        // Idempotent - skipped if the saved region was already padded
                         // when it was originally written. Required for users with
                         // calibration data from before this fix landed.
                         expandEnemyBarRegion(saved.enemy);
@@ -562,7 +562,7 @@ function initDetection(): void {
         }
     }
 
-    // No valid calibration — prompt user
+    // No valid calibration - prompt user
     setStatus('Click Detect to set up buff bar tracking.', 'info');
 }
 
@@ -658,7 +658,7 @@ function showDetectPrompt(): void {
     const isFrozen = detectStep === 'waiting-buff-confirm' || detectStep === 'waiting-debuff-confirm' || detectStep === 'waiting-enemy-confirm';
 
     if (isScanning) {
-        // Scanning state — show instructions + cancel
+        // Scanning state - show instructions + cancel
         const barType = isEnemyStep ? 'ENEMY DEBUFF' : isDebuffStep ? 'DEBUFF' : 'BUFF';
         const borderColor = (isDebuffStep || isEnemyStep) ? 'red' : 'green';
         const stepNum = isEnemyStep ? '3' : isDebuffStep ? '2' : '1';
@@ -694,7 +694,7 @@ function showDetectPrompt(): void {
         prompt.appendChild(btnRow);
 
     } else if (isFrozen) {
-        // Found state — show result + confirm/retry
+        // Found state - show result + confirm/retry
         const barType = isEnemyStep ? 'enemy debuff' : isDebuffStep ? 'debuff' : 'buff';
         prompt.style.cssText = 'margin-top:6px; padding:8px; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:5px;';
 
@@ -765,7 +765,7 @@ function onDetectConfirm(): void {
  * Save the current calibration state and start the read loop, even if not all
  * three bars have been detected yet. Called after each detect step's confirm
  * so users who only want buff bar tracking can stop after step 1 and have
- * the gauge work immediately. Idempotent — safe to call multiple times.
+ * the gauge work immediately. Idempotent - safe to call multiple times.
  */
 function applyPartialCalibration(): void {
     if (!buffReader && !debuffReader && !enemyReader) return;
@@ -780,12 +780,12 @@ function applyPartialCalibration(): void {
     if (debuffReader) parts.push('Debuffs');
     if (enemyReader) parts.push('Enemy');
     setStatus(`Reading: ${parts.join(' + ')}`, 'ok');
-    startReading(); // idempotent — has isRunning guard
+    startReading(); // idempotent - has isRunning guard
 }
 
 function onDetectSkipDebuffs(): void {
     if (detectPollInterval) { clearInterval(detectPollInterval); detectPollInterval = null; }
-    log('Skipping debuff detection — proceeding to enemy debuffs');
+    log('Skipping debuff detection - proceeding to enemy debuffs');
     startHoverScan('enemy');
 }
 
@@ -828,7 +828,7 @@ function handleDetectionResult(result: DetectionResult, mode: 'buff' | 'debuff' 
     if (result.success && result.region) {
         if (mode === 'enemy') {
             result.region.isEnemy = true;
-            // Symmetric scan-area expansion around the anchor — see expandEnemyBarRegion
+            // Symmetric scan-area expansion around the anchor - see expandEnemyBarRegion
             // for the rationale. Must run BEFORE the BuffBarReader is constructed so
             // the reader sees the padded region from its first read cycle.
             expandEnemyBarRegion(result.region);
@@ -942,7 +942,7 @@ function readAndUpdate(): void {
         if (buffs.length < prevBuffSlotCount - 2 && prevBuffSlotCount > 3) {
             if (debugMode) log(`[Reflow] Slot drop ${prevBuffSlotCount}\u2192${buffs.length}, holding state`, 'debug');
             prevBuffSlotCount = buffs.length;
-            // Don't process — keep previous ability states
+            // Don't process - keep previous ability states
         } else {
             prevBuffSlotCount = buffs.length;
             processSlots(buffs, styleDef.abilities.filter(a => a.source === 'buff'));
@@ -1093,7 +1093,7 @@ const abilityMatchCounts: Record<string, number> = {};
 /** Layer 1: Previous buff slot count for reflow detection */
 let prevBuffSlotCount = 0;
 
-/** Layer 2: Miss counter grace — replaces time-based grace period */
+/** Layer 2: Miss counter grace - replaces time-based grace period */
 const abilityMissCount: Record<string, number> = {};
 const ABILITY_GRACE_MISSES = 10; // 10 × 200ms = 2 seconds of consecutive misses before deactivation
 
@@ -1140,8 +1140,8 @@ function readDualTextTimer(slot: BuffSlot): { time: number; scanX: number; scanY
 
 /**
  * Two sub-passes by mask profile:
- * Sub-pass A — default-mask abilities (maskProfile undefined or 'default')
- * Sub-pass B — dual-text abilities against remaining unmatched slots only
+ * Sub-pass A - default-mask abilities (maskProfile undefined or 'default')
+ * Sub-pass B - dual-text abilities against remaining unmatched slots only
  */
 function processSlots(
     slots: BuffSlot[],
@@ -1222,7 +1222,7 @@ function processSlots(
 
     // Process all assigned slots through debounce + store update logic
     for (const [slot, { def: bestDef, score: bestScore }] of assignedSlots) {
-        // Bone Shield: consume slot silently — never activate, never render
+        // Bone Shield: consume slot silently - never activate, never render
         if (bestDef.id === 'bone_shield') continue;
 
         // Debounce: require consecutive match cycles before activating
@@ -1239,7 +1239,7 @@ function processSlots(
         if (!wasRecentlyActive && abilityMatchCounts[bestDef.id] < ABILITY_DEBOUNCE_CYCLES) continue;
 
         // Dual-text abilities: timer ONLY from upper-left (Timer 2), stacks always 0.
-        // Raw reader output passes directly to gauge — no smoothing, no fallback.
+        // Raw reader output passes directly to gauge - no smoothing, no fallback.
         if (bestDef.maskProfile === 'dual-text') {
             const dual = readDualTextTimer(slot);
             if (verboseDebug) {
@@ -1306,11 +1306,11 @@ function processSlots(
         if (!currentState) continue;
 
         if (currentState.active) {
-            // Layer 2: Miss counter grace — increment miss count each cycle ability is not seen
+            // Layer 2: Miss counter grace - increment miss count each cycle ability is not seen
             abilityMissCount[def.id] = (abilityMissCount[def.id] || 0) + 1;
-            const graceMisses = def.type === 'stacking-buff' ? 5 : ABILITY_GRACE_MISSES; // 5 × 200ms = 1s for stacking — fast deactivation when player spends all stacks
+            const graceMisses = def.type === 'stacking-buff' ? 5 : ABILITY_GRACE_MISSES; // 5 × 200ms = 1s for stacking - fast deactivation when player spends all stacks
             if (abilityMissCount[def.id] > graceMisses) {
-                // Ability disappeared — exceeded miss threshold. Start cooldown if applicable
+                // Ability disappeared - exceeded miss threshold. Start cooldown if applicable
                 if (def.type === 'ability' && def.cooldownDuration) {
                     if (def.cooldownStart === 'on-expiry') {
                         // CD starts now
@@ -1321,7 +1321,7 @@ function processSlots(
                             castTimestamp: 0,
                         });
                     } else if (def.cooldownStart === 'on-cast' && currentState.castTimestamp > 0) {
-                        // CD was running since cast — compute remaining
+                        // CD was running since cast - compute remaining
                         const elapsed = (now - currentState.castTimestamp) / 1000;
                         const remaining = Math.max(0, def.cooldownDuration - elapsed);
                         store.updateAbility(def.id, {
@@ -1339,7 +1339,7 @@ function processSlots(
             }
             // Within grace: keep current state
         } else if (currentState.isOnCooldown && currentState.cooldownRemaining > 0) {
-            // Ability is on cooldown — decrement remaining
+            // Ability is on cooldown - decrement remaining
             // Read cycle is POLL_INTERVAL_MS
             const newRemaining = Math.max(0, currentState.cooldownRemaining - (POLL_INTERVAL_MS / 1000));
             store.updateAbility(def.id, {
@@ -1536,12 +1536,12 @@ function renderPanelsToHTML(): void {
         gaugeRenderer = createGaugeRenderer(state.overlayStyle);
     }
 
-    // Master kill switch — when hidden, skip rendering both panels entirely.
+    // Master kill switch - when hidden, skip rendering both panels entirely.
     const hideAll = state.masterOverlayHidden;
     const showGauge = !hideAll && state.panels['combat-gauge'].visible;
     const showBuffs = !hideAll && state.panels['combat-buffs'].visible;
 
-    // Panel 1: Combat Gauge — use canvas rendering for real icons
+    // Panel 1: Combat Gauge - use canvas rendering for real icons
     const gaugeEl = document.getElementById('panel-combat-gauge');
     if (gaugeEl) gaugeEl.style.display = showGauge ? '' : 'none';
     if (gaugeEl && showGauge) {
@@ -1704,7 +1704,7 @@ function init(): void {
             return;
         }
 
-        // Hide HTML panels — overlay manager will render to game screen
+        // Hide HTML panels - overlay manager will render to game screen
         const panelsView = document.getElementById('panels-view');
         if (panelsView) panelsView.style.display = 'none';
 
@@ -1714,7 +1714,7 @@ function init(): void {
         // Initialize overlay manager
         overlayManager = new OverlayManager();
 
-        // Subscribe to state changes — only update overlay (no HTML panel rendering)
+        // Subscribe to state changes - only update overlay (no HTML panel rendering)
         store.subscribe(() => {
             // Overlay manager handles rendering on its own interval,
             // but force an immediate render on state change for responsiveness
@@ -1760,7 +1760,7 @@ function init(): void {
             setStatus('Reading...', 'ok');
         });
 
-        // Subscribe to state changes — render panels to HTML
+        // Subscribe to state changes - render panels to HTML
         store.subscribe(() => {
             renderPanelsToHTML();
         });

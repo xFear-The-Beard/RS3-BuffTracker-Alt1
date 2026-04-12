@@ -9,7 +9,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
 
 /**
  * Themed renderer (Style D).
- * FFXIV job gauge inspired — each combat style has a bespoke visual where the shape is the identity.
+ * FFXIV job gauge inspired - each combat style has a bespoke visual where the shape is the identity.
  * - Necromancy: Plague doctor mask silhouette with glowing eyes
  * - Magic: Arcane staff with sun orb and runic circle segments
  * - Ranged: Crosshair target with angular hex frames and arrowhead stacks
@@ -18,7 +18,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
 export class ThemedRenderer implements OverlayRenderer {
 
     // =====================================================================
-    // HTML Rendering — falls back to canvas in an <img> tag
+    // HTML Rendering - falls back to canvas in an <img> tag
     // =====================================================================
 
     renderToHTML(container: HTMLElement, state: AppState, styleDef?: StyleDef): void {
@@ -36,7 +36,7 @@ export class ThemedRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Canvas Rendering — dispatches to per-style methods
+    // Canvas Rendering - dispatches to per-style methods
     // =====================================================================
 
     renderToCanvas(canvas: HTMLCanvasElement, state: AppState, styleDef?: StyleDef): void {
@@ -72,7 +72,7 @@ export class ThemedRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Necromancy — Plague Doctor Mask
+    // Necromancy - Plague Doctor Mask
     // =====================================================================
 
     private drawNecromancy(ctx: CanvasRenderingContext2D, state: AppState, def: StyleDef, w: number, h: number): void {
@@ -302,7 +302,7 @@ export class ThemedRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Magic — Arcane Staff with Runic Circle
+    // Magic - Arcane Staff with Runic Circle
     // =====================================================================
 
     private drawMagic(ctx: CanvasRenderingContext2D, state: AppState, def: StyleDef, w: number, h: number): void {
@@ -448,7 +448,7 @@ export class ThemedRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Ranged — Crosshair Target
+    // Ranged - Crosshair Target
     // =====================================================================
 
     private drawRanged(ctx: CanvasRenderingContext2D, state: AppState, def: StyleDef, w: number, h: number): void {
@@ -622,7 +622,7 @@ export class ThemedRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Melee — Shield/Diamond Crest
+    // Melee - Shield/Diamond Crest
     // =====================================================================
 
     private drawMelee(ctx: CanvasRenderingContext2D, state: AppState, def: StyleDef, w: number, h: number): void {
@@ -819,7 +819,7 @@ export class ThemedRenderer implements OverlayRenderer {
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon — uses display image first, falls back to ref image, then colored dot. */
+    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,

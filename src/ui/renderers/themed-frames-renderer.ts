@@ -19,7 +19,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
 export class ThemedFramesRenderer implements OverlayRenderer {
 
     // =====================================================================
-    // HTML Rendering — uses canvas in container for consistency
+    // HTML Rendering - uses canvas in container for consistency
     // =====================================================================
 
     renderToHTML(container: HTMLElement, state: AppState, styleDef?: StyleDef): void {
@@ -617,7 +617,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon — uses display image first, falls back to ref image, then colored dot. */
+    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,

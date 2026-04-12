@@ -8,7 +8,7 @@
  * any output that should be silent in normal operation.
  *
  * console.error and console.warn calls in library code are NOT routed
- * through this — actual error output should remain visible regardless of
+ * through this - actual error output should remain visible regardless of
  * debug mode.
  */
 

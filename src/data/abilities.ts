@@ -2,23 +2,23 @@
  * Combat style definitions and buff/debuff registry.
  *
  * Ability types (based on Job Gauges architecture):
- *  - 'buff-timer': Screen-read timer from player buff bar (Darkness, Conjures)
- *  - 'stacking-buff': Digit reader output IS the stack count (Residual Souls, Necrosis)
- *  - 'ability': Buff bar while active + internal cooldown countdown
+ * - 'buff-timer': Screen-read timer from player buff bar (Darkness, Conjures)
+ * - 'stacking-buff': Digit reader output IS the stack count (Residual Souls, Necrosis)
+ * - 'ability': Buff bar while active + internal cooldown countdown
  *               cooldownStart='on-cast': CD starts when buff first appears
  *               cooldownStart='on-expiry': CD starts when buff disappears
- *  - 'enemy-debuff': Detected on enemy target display, not player buff bar
+ * - 'enemy-debuff': Detected on enemy target display, not player buff bar
  *
  * Other fields:
- *  - source: 'buff', 'debuff', or 'enemy' (which bar/region to read from)
- *  - cooldownDuration: total cooldown in seconds (for 'ability' type)
- *  - cooldownStart: 'on-cast' or 'on-expiry' — when the CD timer begins
- *  - buffDuration: active buff duration in seconds (for display + CD-on-cast calc)
- *  - internalDuration: hardcoded timer to start when detected (for 'enemy-debuff' like Bloat)
- *  - maxStacks: for stacking-buff, the maximum count
- *  - minMaxStacks: minimum maxStacks without gear modifier (e.g. Residual Souls 3 without Lantern)
- *  - splitAt: for display, insert visual gap at this stack count (e.g. necrosis 6+6)
- *  - group: which AbilityGroup this ability belongs to (set by StyleDef.groups)
+ * - source: 'buff', 'debuff', or 'enemy' (which bar/region to read from)
+ * - cooldownDuration: total cooldown in seconds (for 'ability' type)
+ * - cooldownStart: 'on-cast' or 'on-expiry' - when the CD timer begins
+ * - buffDuration: active buff duration in seconds (for display + CD-on-cast calc)
+ * - internalDuration: hardcoded timer to start when detected (for 'enemy-debuff' like Bloat)
+ * - maxStacks: for stacking-buff, the maximum count
+ * - minMaxStacks: minimum maxStacks without gear modifier (e.g. Residual Souls 3 without Lantern)
+ * - splitAt: for display, insert visual gap at this stack count (e.g. necrosis 6+6)
+ * - group: which AbilityGroup this ability belongs to (set by StyleDef.groups)
  */
 
 export type CombatStyle = 'necromancy' | 'magic' | 'ranged' | 'melee';
@@ -56,15 +56,15 @@ export interface AbilityDef {
     maskProfile?: 'default' | 'dual-text';
 }
 
-/** Visual grouping for gauge layout — how abilities are clustered and rendered */
+/** Visual grouping for gauge layout - how abilities are clustered and rendered */
 export interface AbilityGroup {
     id: string;
     name: string;
     /** How this group renders in the gauge:
-     *  - 'row': horizontal strip of icons (conjures, stacks)
-     *  - 'grid-2x2': 2×2 grid of icons (incantations)
-     *  - 'bar': single ability with progress bar (Bloat timer)
-     *  - 'prominent': large featured slot (Living Death, Berserk, Sunshine)
+     * - 'row': horizontal strip of icons (conjures, stacks)
+     * - 'grid-2x2': 2×2 grid of icons (incantations)
+     * - 'bar': single ability with progress bar (Bloat timer)
+     * - 'prominent': large featured slot (Living Death, Berserk, Sunshine)
      */
     layout: 'row' | 'grid-2x2' | 'bar' | 'prominent';
     /** Ordered list of ability/conjure IDs in this group */
@@ -84,8 +84,8 @@ export interface StyleDef {
 
 // TODO: Wire ability definitions for these registered refs (refs exist in icon-loader, no AbilityDef yet):
 // Combat buffs (refs/combat/necromancy/):
-//   - 'reaper-necklace': Reaper Necklace — passive stacking buff (needs tracking type decision)
-//   - 'life-points-boosted': Life Points Boosted — HP boost indicator (needs tracking type decision)
+//  - 'reaper-necklace': Reaper Necklace - passive stacking buff (needs tracking type decision)
+//  - 'life-points-boosted': Life Points Boosted - HP boost indicator (needs tracking type decision)
 
 // --- Necromancy ---
 const necromancyAbilities: AbilityDef[] = [
@@ -93,13 +93,13 @@ const necromancyAbilities: AbilityDef[] = [
     { id: 'living_death', name: 'Living Death', shortName: 'Living Death', type: 'ability', source: 'buff', color: '#c084fc', cooldownDuration: 90, cooldownStart: 'on-expiry', buffDuration: 30, refImage: 'living-death' },
     // TODO: Death Skulls requires action bar cooldown tracking (Phase 6) to function.
     // Currently renders as a permanent placeholder in the gauge.
-    // No buff bar icon exists for this ability — cooldown must be read from the action bar.
+    // No buff bar icon exists for this ability - cooldown must be read from the action bar.
     { id: 'death_skulls', name: 'Death Skulls', shortName: 'Death Skulls', type: 'ability', source: 'buff', color: '#a78bfa', cooldownDuration: 60, cooldownStart: 'on-cast', buffDuration: 0, refImage: 'death-skulls' },
     { id: 'threads', name: 'Threads of Fate', shortName: 'Threads', type: 'ability', source: 'buff', color: '#a78bfa', cooldownDuration: 45, cooldownStart: 'on-cast', buffDuration: 6.6, refImage: 'threads-of-fate' },
     { id: 'split_soul_necro', name: 'Split Soul', shortName: 'Split Soul', type: 'ability', source: 'buff', color: '#818cf8', cooldownDuration: 60, cooldownStart: 'on-cast', buffDuration: 20.4, refImage: 'split-soul-necro' },
     // buff-timer: screen-read timer from buff bar, no cooldown inference
     { id: 'darkness', name: 'Darkness', shortName: 'Darkness', type: 'buff-timer', source: 'buff', color: '#8b5cf6', refImage: 'darkness' },
-    // Tracked but hidden from gauge — consume slots silently
+    // Tracked but hidden from gauge - consume slots silently
     { id: 'death_spark', name: 'Death Spark', shortName: 'D.Spark', type: 'buff-timer', source: 'buff', color: '#facc15', refImage: 'death-spark' },
     { id: 'death_essence_buff', name: 'Death Essence', shortName: 'D.Essence', type: 'buff-timer', source: 'buff', color: '#a78bfa', refImage: 'death-essence-buff' },
     { id: 'death_essence_debuff', name: 'Death Essence CD', shortName: 'D.Ess CD', type: 'buff-timer', source: 'debuff', color: '#a78bfa', refImage: 'death-essence-debuff' },

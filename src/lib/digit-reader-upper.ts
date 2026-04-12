@@ -3,9 +3,9 @@
  *
  * This file is a STANDALONE clone of digit-reader.ts. It is intentionally
  * separated from the lower-left reader so that:
- *   - The compact-font matching threshold and template set are isolated.
- *   - Changes here cannot affect the proven lower-left reader.
- *   - The upper-left can be tuned independently for the dual-text use case.
+ *  - The compact-font matching threshold and template set are isolated.
+ *  - Changes here cannot affect the proven lower-left reader.
+ *  - The upper-left can be tuned independently for the dual-text use case.
  *
  * Imports only from digit-templates-upper.ts (UPPER_DIGIT_TEMPLATES).
  * Does NOT import from digit-reader.ts or digit-templates.ts.
@@ -216,7 +216,7 @@ function matchTemplatesUpper(
                 x++;
             }
         } else {
-            // No match at this position — advance past it
+            // No match at this position - advance past it
             x++;
         }
     }

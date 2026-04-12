@@ -11,7 +11,7 @@ export interface DigitTemplate {
     rows: string[];
 }
 
-/** Templates keyed by character — each char may have multiple variants */
+/** Templates keyed by character - each char may have multiple variants */
 export const DIGIT_TEMPLATES: Record<string, DigitTemplate[]> = {
     "0": [
         {

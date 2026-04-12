@@ -45,7 +45,7 @@ export class ClassicRenderer implements OverlayRenderer {
             html += '</div>';
         }
 
-        // Bloat progress bar (enemy-debuff with internalDuration — not caught by isTimerDisplay)
+        // Bloat progress bar (enemy-debuff with internalDuration - not caught by isTimerDisplay)
         const bloat = def.abilities.find(a => a.id === 'bloat');
         if (bloat) {
             const bloatState = state.abilities['bloat'];
@@ -161,7 +161,7 @@ export class ClassicRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background gradient (approximation — canvas can't do CSS gradients easily)
+        // Background gradient (approximation - canvas can't do CSS gradients easily)
         ctx.fillStyle = 'rgba(18, 12, 30, 235)'; // 0.92 * 255
         roundRect(ctx, 0, 0, dims.width, dims.height, 4);
         ctx.fill();
@@ -176,7 +176,7 @@ export class ClassicRenderer implements OverlayRenderer {
         const padX = 8;
         let y = 6;
 
-        // Icon grid — 4 columns (excluding gauge-excluded IDs and conjures)
+        // Icon grid - 4 columns (excluding gauge-excluded IDs and conjures)
         const gridExcludeConjures = ['skeleton', 'zombie', 'ghost', 'phantom'];
         const gridAbilities = def.abilities.filter(a => isTimerDisplay(a.type) && !GAUGE_EXCLUDED_IDS.has(a.id) && !gridExcludeConjures.includes(a.id) && a.id !== 'bloat');
         const cols = 4;
@@ -451,7 +451,7 @@ export class ClassicRenderer implements OverlayRenderer {
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon — uses display image first, falls back to ref image, then colored dot. */
+    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,

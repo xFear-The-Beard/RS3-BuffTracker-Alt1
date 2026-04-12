@@ -40,7 +40,7 @@ export interface AppState {
     lastReadTime: number;
     // Panel management
     panels: Record<PanelId, PanelState>;
-    /** Master kill switch — when true, ALL overlays are hidden regardless of per-panel visibility. Per-panel visible state is preserved so flipping this back to false restores exactly what was visible before. */
+    /** Master kill switch - when true, ALL overlays are hidden regardless of per-panel visibility. Per-panel visible state is preserved so flipping this back to false restores exactly what was visible before. */
     masterOverlayHidden: boolean;
     overlayStyle: OverlayStyle;
     combatBuffTracking: Record<string, BuffTrackMode>;
@@ -108,7 +108,7 @@ function savePanelData(panels: Record<PanelId, PanelState>, overlayStyle: Overla
 function createDefaultPanels(): Record<PanelId, PanelState> {
     return {
         'combat-gauge': { visible: true, x: 100, y: 100 },
-        // Default off until the combat buffs panel is fully wired —
+        // Default off until the combat buffs panel is fully wired  -
         // shipping it visible-by-default would surface an empty/static
         // overlay to fresh users with nothing to interact with.
         'combat-buffs': { visible: false, x: 100, y: 450 },
@@ -213,7 +213,7 @@ class Store {
     }
 
     /**
-     * Master kill switch — hides ALL overlays without touching per-panel visibility.
+     * Master kill switch - hides ALL overlays without touching per-panel visibility.
      * When flipped back to false, each panel resumes whatever individual state it had.
      */
     setMasterOverlayHidden(hidden: boolean): void {

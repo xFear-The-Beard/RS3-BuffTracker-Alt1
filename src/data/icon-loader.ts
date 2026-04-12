@@ -6,17 +6,17 @@
  * across all machines regardless of OS/browser color profile.
  *
  * Display refs (.png) are loaded at runtime via fetch as HTMLImageElement
- * for gauge rendering only — they are NOT used for detection.
+ * for gauge rendering only - they are NOT used for detection.
  */
 
 import { debugLog } from '../lib/debug';
 
 /**
- * Detection ref images — loaded via imagedata-loader at build time.
+ * Detection ref images - loaded via imagedata-loader at build time.
  * Each require() returns a Promise<ImageData> with sRGB-stripped pixels.
  */
 const REF_PROMISES: Record<string, Promise<ImageData>> = {
-    // Combat — Necromancy
+    // Combat - Necromancy
     'living-death': require('../refs/combat/necromancy/living-death.data.png'),
     'darkness': require('../refs/combat/necromancy/darkness.data.png'),
     'threads-of-fate': require('../refs/combat/necromancy/threads-of-fate.data.png'),
@@ -36,14 +36,14 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'bone-shield': require('../refs/combat/necromancy/bone-shield.data.png'),
     'reaper-necklace': require('../refs/combat/necromancy/reaper-necklace.data.png'),
     'life-points-boosted': require('../refs/combat/necromancy/life-points-boosted.data.png'),
-    // Combat — Enemy Debuffs
+    // Combat - Enemy Debuffs
     'haunted-ghost': require('../refs/combat/enemy/haunted-ghost.data.png'),
     'invoke-death-enemy': require('../refs/combat/enemy/invoke-death-enemy.data.png'),
-    // Combat — Player Debuff Cooldowns
+    // Combat - Player Debuff Cooldowns
     'death-essence-debuff': require('../refs/combat/debuffs/death-essence-debuff.data.png'),
     'death-grasp': require('../refs/combat/debuffs/death-grasp.data.png'),
     'crackling-debuff': require('../refs/combat/debuffs/crackling-debuff.data.png'),
-    // Combat — Magic
+    // Combat - Magic
     'sunshine': require('../refs/combat/magic/sunshine.data.png'),
     'greater-sunshine': require('../refs/combat/magic/greater-sunshine.data.png'),
     'instability': require('../refs/combat/magic/instability.data.png'),
@@ -52,7 +52,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'glacial-embrace': require('../refs/combat/magic/glacial-embrace.data.png'),
     'soulfire': require('../refs/combat/magic/soulfire.data.png'),
     'animate-dead': require('../refs/combat/magic/animate-dead.data.png'),
-    // Combat — Ranged
+    // Combat - Ranged
     'deaths-swiftness': require('../refs/combat/ranged/deaths-swiftness.data.png'),
     'greater-deaths-swiftness': require('../refs/combat/ranged/greater-deaths-swiftness.data.png'),
     'crystal-rain': require('../refs/combat/ranged/crystal-rain.data.png'),
@@ -61,7 +61,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'balance-by-force': require('../refs/combat/ranged/balance-by-force.data.png'),
     'searing-winds': require('../refs/combat/ranged/searing-winds.data.png'),
     'shadow-imbued': require('../refs/combat/ranged/shadow-imbued.data.png'),
-    // Combat — Melee
+    // Combat - Melee
     'berserk': require('../refs/combat/melee/berserk.data.png'),
     'greater-barge': require('../refs/combat/melee/greater-barge.data.png'),
     'natural-instinct': require('../refs/combat/melee/natural-instinct.data.png'),
@@ -72,7 +72,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'pulverise': require('../refs/combat/melee/pulverise.data.png'),
     'bloodlust': require('../refs/combat/melee/bloodlust.data.png'),
     'bloodlust-max': require('../refs/combat/melee/bloodlust-max.data.png'),
-    // Combat — General
+    // Combat - General
     'overload': require('../refs/combat/general/overload.data.png'),
     'elder-overload': require('../refs/combat/general/elder-overload.data.png'),
     'supreme-overload': require('../refs/combat/general/supreme-overload.data.png'),
@@ -84,7 +84,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'antifire': require('../refs/combat/general/antifire.data.png'),
     'wyrmfire': require('../refs/combat/general/wyrmfire.data.png'),
     'aggression-potion': require('../refs/combat/general/aggression-potion.data.png'),
-    // Combat — Defensive
+    // Combat - Defensive
     'devotion': require('../refs/combat/defensive/devotion.data.png'),
     'barricade': require('../refs/combat/defensive/barricade.data.png'),
     'reflect': require('../refs/combat/defensive/reflect.data.png'),
@@ -95,17 +95,17 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'immortality': require('../refs/combat/defensive/immortality.data.png'),
     'divert': require('../refs/combat/defensive/divert.data.png'),
     'disruption-shield': require('../refs/combat/defensive/disruption-shield.data.png'),
-    // Combat — Utility
+    // Combat - Utility
     'vulnerability': require('../refs/combat/utility/vulnerability.data.png'),
     'smoke-cloud': require('../refs/combat/utility/smoke-cloud.data.png'),
     'limitless': require('../refs/combat/utility/limitless.data.png'),
     'ingenuity': require('../refs/combat/utility/ingenuity.data.png'),
     'onslaught': require('../refs/combat/utility/onslaught.data.png'),
-    // Combat — Sigils
+    // Combat - Sigils
     'demon-slayer': require('../refs/combat/sigils/demon-slayer.data.png'),
     'dragon-slayer': require('../refs/combat/sigils/dragon-slayer.data.png'),
     'undead-slayer': require('../refs/combat/sigils/undead-slayer.data.png'),
-    // Combat — Weapon Specs
+    // Combat - Weapon Specs
     'grimoire': require('../refs/combat/weapon-specs/grimoire.data.png'),
     'scripture-jas': require('../refs/combat/weapon-specs/scripture-jas.data.png'),
     'scripture-ful': require('../refs/combat/weapon-specs/scripture-ful.data.png'),
@@ -116,7 +116,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'adren-pot-cooldown': require('../refs/combat/weapon-specs/adren-pot-cooldown.data.png'),
     'powerburst-cooldown': require('../refs/combat/weapon-specs/powerburst-cooldown.data.png'),
     'portent-cooldown': require('../refs/combat/weapon-specs/portent-cooldown.data.png'),
-    // Combat — Prayers
+    // Combat - Prayers
     'soul-split': require('../refs/combat/prayers/soul-split.data.png'),
     'deflect-magic': require('../refs/combat/prayers/deflect-magic.data.png'),
     'deflect-melee': require('../refs/combat/prayers/deflect-melee.data.png'),
@@ -130,14 +130,14 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
     'torment': require('../refs/combat/prayers/torment.data.png'),
     'turmoil': require('../refs/combat/prayers/turmoil.data.png'),
     'sorrow': require('../refs/combat/prayers/sorrow.data.png'),
-    // Combat — Invention
+    // Combat - Invention
     'crackling': require('../refs/combat/invention/crackling.data.png'),
     'crackling-cooldown': require('../refs/combat/invention/crackling-cooldown.data.png'),
     'aftershock': require('../refs/combat/invention/aftershock.data.png'),
     'enhanced-devoted': require('../refs/combat/invention/enhanced-devoted.data.png'),
     'relentless': require('../refs/combat/invention/relentless.data.png'),
     'ruthless': require('../refs/combat/invention/ruthless.data.png'),
-    // Combat — Incense
+    // Combat - Incense
     'incense-lantadyme': require('../refs/combat/incense/incense-lantadyme.data.png'),
     'incense-kwuarm': require('../refs/combat/incense/incense-kwuarm.data.png'),
     'incense-dwarf-weed': require('../refs/combat/incense/incense-dwarf-weed.data.png'),
@@ -147,7 +147,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
 };
 
 /**
- * Display image paths — for gauge rendering only, loaded at runtime via fetch.
+ * Display image paths - for gauge rendering only, loaded at runtime via fetch.
  * These are plain .png files in dist/refs/, NOT processed by imagedata-loader.
  */
 const DISPLAY_IMAGE_PATHS: Record<string, string> = {
@@ -267,10 +267,10 @@ const DISPLAY_IMAGE_PATHS: Record<string, string> = {
     'incense-torstol': 'refs/combat/incense/incense-torstol.png',
 };
 
-/** Resolved detection refs — populated by loadAllRefImages() */
+/** Resolved detection refs - populated by loadAllRefImages() */
 let allImages: Record<string, ImageData> = {};
 
-/** Loaded display images for RENDERING — clean wiki icons without timer text */
+/** Loaded display images for RENDERING - clean wiki icons without timer text */
 let displayImages: Record<string, HTMLImageElement> = {};
 
 /** Custom indicator images (soul ghost, necrosis skull) */

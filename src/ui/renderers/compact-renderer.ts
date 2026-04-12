@@ -10,7 +10,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
 /**
  * Compact Horizontal Flow renderer (Style A).
  * Low-profile, horizontally flowing layout with pill-shaped ability items.
- * Minimal vertical footprint — designed for users who want minimal screen obstruction.
+ * Minimal vertical footprint - designed for users who want minimal screen obstruction.
  */
 export class CompactRenderer implements OverlayRenderer {
 
@@ -292,7 +292,7 @@ export class CompactRenderer implements OverlayRenderer {
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon — uses display image first, falls back to ref image, then colored dot. */
+    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,

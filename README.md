@@ -1,4 +1,4 @@
-# RS3 BuffTracker — Alt1 Plugin
+# RS3 BuffTracker - Alt1 Plugin
 
 A combat buff/debuff tracker overlay for RuneScape 3, built for [Alt1 Toolkit](https://runeapps.org).
 
@@ -10,20 +10,20 @@ Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuf
 
 ## Features
 
-- **Works with the current RS3 UI (post-January 2026 font changes)**
-- **Scale-aware (In-progress)** — Should currently function at 100, 120, 150, 200 - may require additional testing.
-- **Necromancy tracking** — conjures, Living Death, Darkness, Split Soul, Threads of Fate, Invoke Death, Bloat, Residual Souls, Necrosis stacks, Death Spark, Death Essence
-- **Enemy debuff tracking** — reads the target's debuff bar for Bloat, Invoke Death, Haunted
-- **Five gauge styles** — Compact (A), Classic (B), Modern (C), Themed (D), Themed Frames (E)
-- **Custom timer reading** — built-in digit recognition
-- **Configurable alerts** — buff expiry warnings, stack thresholds, timer alerts
+- Works with the current RS3 UI (post-January 2026 font changes)
+- Scale-aware (in-progress) - should currently function at 100, 120, 150, 200. May require additional testing at other scales.
+- Necromancy tracking - conjures, Living Death, Darkness, Split Soul, Threads of Fate, Invoke Death, Bloat, Residual Souls, Necrosis stacks, Death Spark, Death Essence
+- Enemy debuff tracking - reads the target's debuff bar for Bloat, Invoke Death, Haunted
+- Five gauge styles - Compact (A), Classic (B), Modern (C), Themed (D), Themed Frames (E)
+- Custom timer reading with built-in digit recognition
+- Configurable alerts for buff expiry warnings, stack thresholds, and timer alerts
 
 ## Requirements
 
 - [Alt1 Toolkit](https://runeapps.org) installed
 - RuneScape 3 (NXT client)
-- Buff bar icon size: **Small** (in RS3 Settings → Interfaces → Buff Bar)
-- Game and UI Scale: **100% recommended.** Other scales work too — the detector handles roughly 60% to 260% of default. If detection won't find your buff bar, try changing your RS3 in-game UI Settings → Display → Interface Scale and click Detect again.
+- Buff bar icon size: Small (in RS3 Settings > Interfaces > Buff Bar)
+- Game and UI Scale: 100% recommended. Other scales work too - the detector handles roughly 60% to 260% of default. If detection won't find your buff bar, try changing your RS3 in-game UI Settings > Display > Interface Scale and click Detect again.
 
 ## Installation
 
@@ -38,12 +38,14 @@ Or open the URL in Alt1's built-in browser and click "Add App".
 ## Setup
 
 1. Open the plugin in Alt1
-2. Click **Detect Buff Bar** — move your mouse over your buff bar until the green border highlights, then click to anchor
-3. Click **Detect Debuff Bar** — same process for your player debuff bar
-4. Click **Detect Enemy Debuff Bar** — target an enemy first, then hover over their debuff bar and click (optional — only needed if you want to track Bloat, Invoke Death, etc. on your target)
-5. The gauge overlay appears and begins tracking automatically
+2. Click Detect to start the setup flow
+3. Step 1 - Buff Bar: Hover your mouse over any icon on your buff bar (the ones with green borders). The plugin scans your mouse position automatically, no need to click the game screen. When it finds the bar, click Confirm to lock it in. Tracking starts immediately.
+4. Step 2 - Debuff Bar: Same process, but for your player debuff bar (red borders). Click Confirm to add debuff tracking, or Skip Debuffs if you don't need it.
+5. Step 3 - Enemy Debuff Bar: Target an enemy first so their debuff bar is visible, then hover over any red-bordered icon on their bar. Click Confirm to add enemy tracking, or Skip Enemy Debuffs to finish without it.
 
-Detection positions are saved between sessions. You only need to re-detect if you move your interface layout.
+You can stop after any step. Tracking begins as soon as you confirm, so there's no need to complete all three if you only want buff bar tracking.
+
+Detection positions are saved between sessions. You only need to re-detect if you rearrange your in-game interface layout.
 
 ## How It Works
 
@@ -63,38 +65,38 @@ The plugin reads your buff bar using Alt1's screen capture and matches each icon
 | Excluded | Bone Shield (consumed silently to prevent false matches) |
 
 ### Magic, Ranged, Melee
-Magic, Ranged, and Melee abilities are defined and tracked at the data layer (Sunshine, Death's Swiftness, Berserk, Bloodlust, Perfect Equilibrium, etc.), but the gauges currently render them with a generic layout instead of style-specific visuals. Necromancy gets dedicated treatment (soul orbs, conjure pills, prominent ultimates) because that's what was built out first. Style-specific layouts for Magic, Ranged, and Melee are planned — see the Roadmap section below.
+Magic, Ranged, and Melee abilities are defined and tracked at the data layer (Sunshine, Death's Swiftness, Berserk, Bloodlust, Perfect Equilibrium, etc.), but the gauges currently render them with a generic layout instead of style-specific visuals. Necromancy gets dedicated treatment (soul orbs, conjure pills, prominent ultimates) because that's what was built out first. Style-specific layouts for the other combat styles are planned.
 
 ## Settings
 
-- **Gauge style** — choose from 5 overlay styles
-- **Ability toggles** — show/hide individual abilities from the gauge
-- **Position & scale** — nudge buttons and scale slider (50-200%)
-- **Alert thresholds** — configure when expiry/stack warnings trigger
-- **Developer Settings** — debug logging, session recording, log export (hidden by default)
+- Gauge style - choose from 5 overlay styles
+- Ability toggles - show/hide individual abilities from the gauge
+- Position and scale - nudge buttons and scale slider (50-200%)
+- Alert thresholds - configure when expiry/stack warnings trigger
+- Developer settings - debug logging, session recording, log export (hidden by default)
 
 ## Roadmap
 
-- Style-specific gauge layouts for Magic, Ranged, and Melee — currently they share a generic layout while Necromancy gets dedicated visuals. Each style needs its own treatment for ultimates, channel sequences, and stack counters (Berserk + Bloodlust, Death's Swiftness + Perfect Equilibrium, Sunshine + soul fragments, etc.).
-- Skilling tracker panel — a third overlay panel for skilling buffs (XP boosts, gathering bonuses, prayer renewals outside combat). Reference images are already collected; UI work is pending.
-- Combat Buffs panel — a checklist mode for tracking always-on potions, scriptures, auras, and prayer renewal that should always be active during combat.
-- Death Skulls cooldown tracking — needs action bar reading rather than buff bar matching.
-- Color tolerance auto-calibration — the current border detection uses a fixed RGB tolerance that may be tight for monitors with non-standard gamma or color profiles. Auto-calibration on first detection would make this more forgiving.
+- Style-specific gauge layouts for Magic, Ranged, and Melee. Currently they share a generic layout while Necromancy gets dedicated visuals. Each style needs its own treatment for ultimates, channel sequences, and stack counters (Berserk + Bloodlust, Death's Swiftness + Perfect Equilibrium, Sunshine + soul fragments, etc.).
+- Skilling tracker panel for skilling buffs (XP boosts, gathering bonuses, prayer renewals outside combat). Reference images are already collected; UI work is pending.
+- Combat Buffs panel - a checklist mode for tracking always-on potions, scriptures, auras, and prayer renewal that should always be active during combat.
+- Death Skulls cooldown tracking. Needs action bar reading rather than buff bar matching.
+- Color tolerance auto-calibration. The current border detection uses a fixed RGB tolerance that may be too tight for monitors with non-standard gamma or color profiles. Auto-calibration on first detection would make this more forgiving.
 
 ## Bug Reports, Suggestions & Feedback
 
 There are two places to give feedback:
 
-**🐛 Bug reports** → [Issues page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/issues). There are templates for both bug reports and feature requests — picking one will pre-fill the right fields.
+Bug reports: [Issues page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/issues). There are templates for both bug reports and feature requests - picking one will pre-fill the right fields.
 
-**💡 Suggestions, questions, screenshots, or general feedback** → [Discussions page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/discussions). Less formal than an issue, no template needed. Categories cover Ideas, Q&A, Show and tell, and General. The pinned welcome post explains where things go.
+Suggestions, questions, screenshots, or general feedback: [Discussions page](https://github.com/xFear-The-Beard/RS3-BuffTracker-Alt1/discussions). Less formal than an issue, no template needed. Categories cover Ideas, Q&A, Show and tell, and General. The pinned welcome post explains where things go.
 
 For tracking or detection bugs, the most useful thing you can attach is a debug log. To produce one:
 
 1. Open the plugin in Alt1
-2. Settings → Developer Settings → enable **Debug Mode**
+2. Settings > Developer Settings > enable Debug Mode
 3. Reproduce the issue (let it run for a minute or two if possible)
-4. Click **Export Log** in the debug panel that appears at the bottom
+4. Click Export Log in the debug panel that appears at the bottom
 5. Drag and drop the downloaded `.log` file directly into the GitHub issue or discussion textbox
 
 GitHub supports `.log` file uploads up to 25 MB, which is far more than the plugin can produce. For visual or rendering bugs, screenshots dropped into the issue textbox work the same way (PNG, JPG, GIF up to 10 MB each).
@@ -115,7 +117,7 @@ Output goes to `dist/`. Requires Node.js and the `alt1` npm package.
 
 ## Disclaimer
 
-This is an unofficial third-party tool. It reads screen pixels only — no game memory access, no automation, no client modification. Use at your own discretion.
+This is an unofficial third-party tool. It reads screen pixels only, no game memory access, no automation, no client modification. Use at your own discretion.
 
 ## License
 

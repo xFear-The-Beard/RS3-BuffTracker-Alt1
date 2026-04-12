@@ -5,7 +5,7 @@ import { COMBAT_STYLES } from '../../data/abilities';
 import { getRefImages, getDisplayImages, getIndicatorImages } from '../../data/icon-loader';
 
 // Abilities that are tracked (matched + consume slots) but never rendered in the gauge.
-// These exist to prevent false matches — their slots are consumed silently.
+// These exist to prevent false matches - their slots are consumed silently.
 const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_essence_debuff', 'bone_shield']);
 
 // ─── Necromancy mockup constants ──────────────────────────────────────────────
@@ -33,7 +33,7 @@ const INCANTATION_COLORS: Record<string, string> = {
 export class ModernRenderer implements OverlayRenderer {
 
     // =====================================================================
-    // Canvas Rendering — Necromancy-specific mockup layout
+    // Canvas Rendering - Necromancy-specific mockup layout
     // =====================================================================
 
     renderToCanvas(canvas: HTMLCanvasElement, state: AppState, styleDef?: StyleDef): void {
@@ -84,7 +84,7 @@ export class ModernRenderer implements OverlayRenderer {
         const hidden = new Set([...state.hiddenAbilities, ...GAUGE_EXCLUDED_IDS]);
         let y = PAD_Y;
 
-        // ROW 1: Conjures (left) + Incantations (right) — side by side
+        // ROW 1: Conjures (left) + Incantations (right) - side by side
         y = this.drawRow1(ctx, state, def, hidden, PAD_X, y, CONTENT_W);
 
         // ROW 2: Bloat timer bar (full width)
@@ -179,8 +179,8 @@ export class ModernRenderer implements OverlayRenderer {
 
         // Panel background + border
         ctx.fillStyle = `rgba(${tr},${tg},${tb},0.04)`;
-        roundRect(ctx, x, y, w, 0.1, 4); // placeholder — we'll draw full height after measuring
-        // We need to know final height — compute it first
+        roundRect(ctx, x, y, w, 0.1, 4); // placeholder - we'll draw full height after measuring
+        // We need to know final height - compute it first
         const labelH = 12; // label line height
         const cols = 2;
         const cellH = 22;
@@ -531,7 +531,7 @@ export class ModernRenderer implements OverlayRenderer {
         return y + maxH + ROW_GAP;
     }
 
-    /** Residual Souls panel — custom soul icons */
+    /** Residual Souls panel - custom soul icons */
     private drawSoulsPanel(
         ctx: CanvasRenderingContext2D,
         ability: AbilityDef,
@@ -626,7 +626,7 @@ export class ModernRenderer implements OverlayRenderer {
         return panelH;
     }
 
-    /** Necrosis panel — custom skull icons in PAIRS */
+    /** Necrosis panel - custom skull icons in PAIRS */
     private drawNecrosisPanel(
         ctx: CanvasRenderingContext2D,
         ability: AbilityDef,
@@ -735,7 +735,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Generic (non-necromancy) canvas rendering — group-based
+    // Generic (non-necromancy) canvas rendering - group-based
     // =====================================================================
 
     private renderGenericCanvas(
@@ -818,7 +818,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Layout: 'prominent' — large featured ability slot
+    // Layout: 'prominent' - large featured ability slot
     // =====================================================================
 
     private drawProminentGroup(
@@ -886,7 +886,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Layout: 'grid-2x2' — 2-column grid of ability tiles
+    // Layout: 'grid-2x2' - 2-column grid of ability tiles
     // =====================================================================
 
     private drawGridGroup(
@@ -959,7 +959,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Layout: 'row' — horizontal strip (conjures, stacks, or abilities)
+    // Layout: 'row' - horizontal strip (conjures, stacks, or abilities)
     // =====================================================================
 
     private drawRowGroup(
@@ -988,7 +988,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Layout: 'bar' — full-width progress bar
+    // Layout: 'bar' - full-width progress bar
     // =====================================================================
 
     private drawBarGroup(
@@ -1208,7 +1208,7 @@ export class ModernRenderer implements OverlayRenderer {
         return y + rowH + 4;
     }
 
-    /** Draw an ability icon — uses display image (HTMLImageElement) first,
+    /** Draw an ability icon - uses display image (HTMLImageElement) first,
      *  falls back to detection ref (ImageData -> offscreen canvas), then colored dot. */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
@@ -1219,7 +1219,7 @@ export class ModernRenderer implements OverlayRenderer {
         color: string,
     ): void {
         if (refImageKey) {
-            // Prefer display image (clean wiki icon, HTMLImageElement — works reliably in Alt1)
+            // Prefer display image (clean wiki icon, HTMLImageElement - works reliably in Alt1)
             const displayImages = getDisplayImages();
             const displayImg = displayImages[refImageKey];
             if (displayImg) {
@@ -1367,7 +1367,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // HTML Rendering (simplified, uses groups — for demo mode)
+    // HTML Rendering (simplified, uses groups - for demo mode)
     // =====================================================================
 
     renderToHTML(container: HTMLElement, state: AppState, styleDef?: StyleDef): void {
@@ -1491,7 +1491,7 @@ export class ModernRenderer implements OverlayRenderer {
     }
 
     // =====================================================================
-    // Dimensions — matches new necromancy layout
+    // Dimensions - matches new necromancy layout
     // =====================================================================
 
     getMinDimensions(state: AppState, styleDef?: StyleDef): { width: number; height: number } {

@@ -88,8 +88,8 @@ export class BuffBarReader {
                 }
 
                 if (!hasBorder) {
-                    // Enemy debuff bar can have gaps between icons — scan past them.
-                    // Player buff/debuff bars are always contiguous — break is correct there.
+                    // Enemy debuff bar can have gaps between icons - scan past them.
+                    // Player buff/debuff bars are always contiguous - break is correct there.
                     if (this.region.isEnemy) {
                         continue;
                     }
@@ -301,7 +301,7 @@ export class BuffBarReader {
 
     /**
      * Read timer text from a buff icon using custom digit reader.
-     * No Alt1 OCR dependency — reads white pixels directly.
+     * No Alt1 OCR dependency - reads white pixels directly.
      */
     private readTimerText(
         buffer: ImageData,
@@ -344,7 +344,7 @@ function extractSubImage(
 
 /**
  * Compare two buff icons for similarity using per-pixel RGB comparison.
- * Original custom matching approach — kept intact.
+ * Original custom matching approach - kept intact.
  * See also: findSubimage-based matching in index.ts (Alt1 native search).
  */
 export function compareBuffIcons(
@@ -362,7 +362,7 @@ export function compareBuffIcons(
 
     if (cw === 0 || ch === 0 || rw === 0 || rh === 0) return result;
 
-    // Skip border pixels — scale-aware. At 100% (27px), border = 1px.
+    // Skip border pixels - scale-aware. At 100% (27px), border = 1px.
     // At higher UI scales, use ceil to ensure border contamination is fully stripped.
     const cBorder = Math.max(1, Math.ceil(cw / 27));
     const rBorder = Math.max(1, Math.ceil(rw / 27));

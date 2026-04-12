@@ -28,7 +28,7 @@ export function loadCalibration(): CalibrationData | null {
         if (typeof data.timestamp !== 'number') return null;
 
         // Schema version check. Older saves missing the field are treated as
-        // version 0 — still loaded for now, but flagged so we know we're using
+        // version 0 - still loaded for now, but flagged so we know we're using
         // legacy data. Bump CALIBRATION_SCHEMA_VERSION on any shape change.
         const savedVersion = typeof data.schemaVersion === 'number' ? data.schemaVersion : 0;
         if (savedVersion !== CALIBRATION_SCHEMA_VERSION) {

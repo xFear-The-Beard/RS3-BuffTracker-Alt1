@@ -102,7 +102,7 @@ function findIconAtPoint(
         const p = px(clickX, y);
         if (isBorderFn(p.r, p.g, p.b)) {
             bottomBorder = y;
-            // Don't break — keep going to find the LAST border row
+            // Don't break - keep going to find the LAST border row
         } else if (bottomBorder >= 0) {
             // Past the border
             break;
@@ -420,47 +420,14 @@ export function detectBarFromClick(isDebuff: boolean): DetectionResult {
 
 /**
  * Expand an enemy debuff BarRegion symmetrically around the anchor icon
- * confirmed during detection, so the reader's per-cycle scan covers a
- * wide enough area to catch debuffs that move around on the bar after
- * detection completes.
+ * so the reader's per-cycle scan covers a wide area regardless of where
+ * the user hovered during detection.
  *
- * Player buff and debuff bars don't need this because all their icons
- * share the same border colour and `countBarExtent` walks them reliably,
- * setting the bar's screen X to the actual leftmost icon. The enemy
- * debuff bar's left walk under-counts in several conditions:
- *  - Hovering the rightmost icon collapses `measureGridSpacing` to its
- *    `iconSize + 3` fallback estimate, which can be 1 px off the real
- *    grid pitch and shifts every subsequent test column away from the
- *    actual icon positions
- *  - The two-pixel `hasIconAt` check is too narrow for icons with
- *    rounded corners or icons that are 1 px misaligned vertically
+ * Adds 12 cells of horizontal padding on each side of the anchor.
+ * Also ensures maxRows is at least 2 for legacy calibrations saved
+ * before the unconditional 3-row scan was added to detectBarFromClick.
  *
- * The result is `barLeft = anchorLeft`, the region's screen X is stuck
- * at the hover position, and everything left of it is permanently
- * invisible to the reader's `getCaptureRect`. Whichever debuff happens
- * to occupy the hovered slot at any moment is the only one that
- * gets tracked.
- *
- * Padding layout (intentionally asymmetric in the vertical direction):
- *  - 12 cells left and 12 cells right of the anchor — symmetric
- *    horizontal expansion centred on the hover point, so the anchor
- *    can be anywhere from slot 0 to slot 24 of the actual bar and
- *    still cover the rest. 24 extra cells × 23 px grid ≈ 552 px,
- *    wider than any realistic enemy debuff bar
- *  - 1 row of padding below the anchor (in addition to the row already
- *    included by the existing `maxRows` default) — handles the rare
- *    two-row enemy debuff layouts without much waste
- *  - 0 rows of padding above the anchor — the enemy HP bar lives
- *    directly above the debuff row, and any extra scan range above
- *    the anchor would risk pulling false-positive pixels from
- *    the green HP fill or the nameplate text
- *
- * Idempotent: sets `_paddingApplied` on the region after running, and
- * skips on a second call. The region is mutated in-place both at fresh
- * detection time AND when reloaded from saved calibration — the flag
- * survives the JSON round-trip into localStorage, so a reloaded
- * already-padded region is left alone. Calibrations saved before this
- * helper existed lack the flag and get padded once on the next load.
+ * Idempotent via _paddingApplied flag that persists through localStorage.
  */
 export function expandEnemyBarRegion(region: BarRegion): void {
     if (region._paddingApplied) return;
