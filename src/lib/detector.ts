@@ -389,18 +389,11 @@ export function detectBarFromClick(isDebuff: boolean): DetectionResult {
     const screenX = captureX + barLeft;
     const screenY = captureY + icon.top;
 
-    // Check for a second row (debuffs often appear below buffs)
-    let maxRows = 1;
-    const rowBelowY = icon.top + gridSize;
-    if (rowBelowY + icon.iconSize < img.height) {
-        const midX = icon.left + Math.floor(icon.iconSize / 2);
-        const i = (rowBelowY * img.width + midX) * 4;
-        const p = { r: img.data[i], g: img.data[i + 1], b: img.data[i + 2] };
-        if (isBorderFn(p.r, p.g, p.b)) {
-            maxRows = 2;
-            debugLog(`[Detector] Found second row at y+${gridSize}`);
-        }
-    }
+    // All bar types (buff, debuff, enemy) can have up to 3 rows.
+    // Scan 3 rows unconditionally so the reader doesn't miss rows
+    // that appear after detection. The reader loop is inclusive
+    // (row <= maxRows), so maxRows=2 gives rows 0, 1, 2 = 3 rows.
+    const maxRows = 2;
 
     const region: BarRegion = {
         x: screenX,
@@ -473,7 +466,6 @@ export function expandEnemyBarRegion(region: BarRegion): void {
     if (region._paddingApplied) return;
 
     const sidePad = 12;
-    const downPad = 1;
 
     // Symmetric horizontal expansion around the anchor, clamped to the
     // left edge of the screen so the capture doesn't go negative.
@@ -487,7 +479,10 @@ export function expandEnemyBarRegion(region: BarRegion): void {
     // left padding + 1 anchor cell + sidePad cells of right padding =
     // (actualLeftPad + 1 + sidePad) cells total → maxColumns = that - 1.
     region.maxColumns = actualLeftPad + sidePad;
-    region.maxRows += downPad;
+
+    // Ensure 3-row scan for legacy calibrations saved before the
+    // unconditional maxRows=2 change in detectBarFromClick.
+    if (region.maxRows < 2) region.maxRows = 2;
 
     region._paddingApplied = true;
 }

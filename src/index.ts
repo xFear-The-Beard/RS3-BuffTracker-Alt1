@@ -509,10 +509,12 @@ function initDetection(): void {
             }
 
             if (buffValid && saved.buffs) {
+                if (saved.buffs.maxRows < 2) saved.buffs.maxRows = 2;
                 buffReader = new BuffBarReader(saved.buffs);
                 log(`Buffs bar verified at (${saved.buffs.x}, ${saved.buffs.y})`);
             }
             if (debuffValid && saved.debuffs) {
+                if (saved.debuffs.maxRows < 2) saved.debuffs.maxRows = 2;
                 debuffReader = new BuffBarReader(saved.debuffs);
                 log(`Debuffs bar verified at (${saved.debuffs.x}, ${saved.debuffs.y})`);
             }
