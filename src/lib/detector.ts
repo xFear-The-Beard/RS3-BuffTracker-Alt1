@@ -205,8 +205,10 @@ function measureGridSpacing(
         return { r: data[i], g: data[i + 1], b: data[i + 2] };
     };
 
-    // Scan right from the icon's right edge. Should be a small dark gap then another border.
-    for (let dx = 1; dx <= 10; dx++) {
+    // Scan right from the icon's right edge to find the next red-bordered icon.
+    // Range covers up to 3 icon widths to skip past non-red neighbors
+    // (e.g. blue Stun Immune on enemy bars) and measure the real grid.
+    for (let dx = 1; dx <= iconSize * 3; dx++) {
         const x = iconRight + dx;
         const p = px(x, midY);
         if (isBorderFn(p.r, p.g, p.b)) {
@@ -222,9 +224,12 @@ function measureGridSpacing(
         }
     }
 
-    // Fallback: estimate from icon size (grid ≈ iconSize + 3 at 100% scale)
-    const estimated = iconSize + 3;
-    debugLog(`[Detector] Grid spacing estimated from icon size: ${estimated}px`);
+    // Fallback: proportional gap based on icon size.
+    // Player bars: 27px icon, 3px gap. Enemy bars: 20px icon, 2px gap.
+    // Both scale proportionally with UI scaling.
+    const gap = Math.round(iconSize * 3 / 27);
+    const estimated = iconSize + gap;
+    debugLog(`[Detector] Grid spacing estimated from icon size: ${estimated}px (gap=${gap})`);
     return estimated;
 }
 
