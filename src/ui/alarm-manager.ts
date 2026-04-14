@@ -1,9 +1,9 @@
 /**
  * Alarm/Alert system with TTS and Web Audio API support.
  * Monitors store state transitions to fire audio/speech alerts for:
- *  - Buff expiry (tracked buff goes active -> inactive)
- *  - Stack thresholds (stack count reaches a configured value)
- *  - Timer warnings (buff timer drops below a configured seconds threshold)
+ * - Buff expiry (tracked buff goes active -> inactive)
+ * - Stack thresholds (stack count reaches a configured value)
+ * - Timer warnings (buff timer drops below a configured seconds threshold)
  */
 
 import { store, AppState, AbilityState } from './store';

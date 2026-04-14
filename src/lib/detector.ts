@@ -205,10 +205,14 @@ function measureGridSpacing(
         return { r: data[i], g: data[i + 1], b: data[i + 2] };
     };
 
-    // Scan right from the icon's right edge to find the next red-bordered icon.
-    // Range covers up to 3 icon widths to skip past non-red neighbors
-    // (e.g. blue Stun Immune on enemy bars) and measure the real grid.
-    for (let dx = 1; dx <= iconSize * 3; dx++) {
+    // Scan right from the icon's right edge for an adjacent same-color icon.
+    // Close range only: adjacent icons land at dx=2-3 at any UI scale (player
+    // bars are always contiguous, enemy bars with adjacent red icons match the
+    // same pattern). When the scan finds nothing, the proportional fallback
+    // below provides the correct grid via icon-size math. A wider scan range
+    // previously introduced false positives from red pixels outside the icon
+    // grid (damage splats, nameplate text), producing wildly wrong grid values.
+    for (let dx = 1; dx <= 10; dx++) {
         const x = iconRight + dx;
         const p = px(x, midY);
         if (isBorderFn(p.r, p.g, p.b)) {
@@ -437,7 +441,13 @@ export function detectBarFromClick(isDebuff: boolean): DetectionResult {
 export function expandEnemyBarRegion(region: BarRegion): void {
     if (region._paddingApplied) return;
 
-    const sidePad = 12;
+    // RS3 enemy target debuff row holds up to 6 icons per row before wrapping.
+    // Symmetric padding of 6 cells (6 left + anchor + 6 right = 13 cells wide)
+    // covers any anchor position within a 6-icon row with 1 cell of safety
+    // margin on the opposite side. 3 rows covered via the unconditional
+    // maxRows=2 in detectBarFromClick. Enemy target bars are not user-
+    // adjustable, so the 6-per-row game limit is a hard upper bound.
+    const sidePad = 6;
 
     // Symmetric horizontal expansion around the anchor, clamped to the
     // left edge of the screen so the capture doesn't go negative.

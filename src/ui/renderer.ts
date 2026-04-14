@@ -6,8 +6,8 @@ import { StyleDef } from '../data/abilities';
  * Each panel type (combat gauge, combat buffs) implements this.
  *
  * Two render targets:
- *  - HTML: for the Alt1 app window (settings panel preview / demo mode in browser)
- *  - Canvas: for Alt1 overlay API (rendered to offscreen canvas, then pushed via overLayImage)
+ * - HTML: for the Alt1 app window (settings panel preview / demo mode in browser)
+ * - Canvas: for Alt1 overlay API (rendered to offscreen canvas, then pushed via overLayImage)
  */
 export interface OverlayRenderer {
     /** Render to an offscreen canvas (for Alt1 overlay) */
