@@ -363,56 +363,6 @@ function renderPanelPositionsSection(): string {
         </div>
     `;
 
-    // Per-style gauge transparency (background + foreground sliders)
-    // Header label follows the current combat style. On style switch, the
-    // settings panel fully rebuilds via setCombatStyle's click handler, so
-    // both the header label and the slider values refresh automatically.
-    const styleName = state.combatStyle.charAt(0).toUpperCase() + state.combatStyle.slice(1);
-    const styleOp = state.styleOpacity?.[state.combatStyle] ?? { background: 1.0, foreground: 1.0 };
-    const styleBgPct = Math.round(styleOp.background * 100);
-    const styleFgPct = Math.round(styleOp.foreground * 100);
-    html += `
-        <div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:10px; color:rgba(255,255,255,0.55); margin-bottom:4px;" data-style-transparency-title>${styleName} Overlay Transparency</div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                <span style="font-size:10px; color:rgba(255,255,255,0.4); padding-left:4px;">Background</span>
-                <span style="font-size:11px; color:rgba(255,255,255,0.7); font-family:monospace;" data-style-bg-display>${styleBgPct}%</span>
-            </div>
-            <input type="range" min="5" max="100" step="1" value="${styleBgPct}" data-setting="styleBg"
-                style="width:100%; accent-color:#a78bfa; height:4px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 3px 0;">
-                <span style="font-size:10px; color:rgba(255,255,255,0.4); padding-left:4px;">Foreground</span>
-                <span style="font-size:11px; color:rgba(255,255,255,0.7); font-family:monospace;" data-style-fg-display>${styleFgPct}%</span>
-            </div>
-            <input type="range" min="5" max="100" step="1" value="${styleFgPct}" data-setting="styleFg"
-                style="width:100%; accent-color:#a78bfa; height:4px;">
-        </div>
-    `;
-
-    // Combat Buffs panel transparency (background + foreground sliders)
-    // Not per-style; the combat buffs panel shares a single opacity pair
-    // across all combat styles since its rendered content is style-agnostic.
-    const buffsOp = state.combatBuffsOpacity ?? { background: 1.0, foreground: 1.0 };
-    const buffsBgPct = Math.round(buffsOp.background * 100);
-    const buffsFgPct = Math.round(buffsOp.foreground * 100);
-    html += `
-        <div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:10px; color:rgba(255,255,255,0.55); margin-bottom:4px;">Combat Buffs Panel Transparency</div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                <span style="font-size:10px; color:rgba(255,255,255,0.4); padding-left:4px;">Background</span>
-                <span style="font-size:11px; color:rgba(255,255,255,0.7); font-family:monospace;" data-buffs-bg-display>${buffsBgPct}%</span>
-            </div>
-            <input type="range" min="5" max="100" step="1" value="${buffsBgPct}" data-setting="buffsBg"
-                style="width:100%; accent-color:#a78bfa; height:4px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 3px 0;">
-                <span style="font-size:10px; color:rgba(255,255,255,0.4); padding-left:4px;">Foreground</span>
-                <span style="font-size:11px; color:rgba(255,255,255,0.7); font-family:monospace;" data-buffs-fg-display>${buffsFgPct}%</span>
-            </div>
-            <input type="range" min="5" max="100" step="1" value="${buffsFgPct}" data-setting="buffsFg"
-                style="width:100%; accent-color:#a78bfa; height:4px;">
-        </div>
-    `;
-
     html += `
         <button class="settings-reset-btn" data-action="reset-positions" style="margin-top:8px;">Reset Positions & Scale</button>
     `;
@@ -997,52 +947,6 @@ function wireEventHandlers(container: HTMLElement): void {
             const percent = parseInt(scaleSlider.value) || 100;
             store.setOverlayScale(percent / 100);
             const display = container.querySelector('[data-scale-display]');
-            if (display) display.textContent = `${percent}%`;
-        });
-    }
-
-    // Per-style gauge transparency - background slider
-    const styleBgSlider = container.querySelector<HTMLInputElement>('[data-setting="styleBg"]');
-    if (styleBgSlider) {
-        styleBgSlider.addEventListener('input', () => {
-            const percent = parseInt(styleBgSlider.value) || 100;
-            const currentStyle = store.getState().combatStyle;
-            store.setStyleOpacityLayer(currentStyle, 'background', percent / 100);
-            const display = container.querySelector('[data-style-bg-display]');
-            if (display) display.textContent = `${percent}%`;
-        });
-    }
-
-    // Per-style gauge transparency - foreground slider
-    const styleFgSlider = container.querySelector<HTMLInputElement>('[data-setting="styleFg"]');
-    if (styleFgSlider) {
-        styleFgSlider.addEventListener('input', () => {
-            const percent = parseInt(styleFgSlider.value) || 100;
-            const currentStyle = store.getState().combatStyle;
-            store.setStyleOpacityLayer(currentStyle, 'foreground', percent / 100);
-            const display = container.querySelector('[data-style-fg-display]');
-            if (display) display.textContent = `${percent}%`;
-        });
-    }
-
-    // Combat buffs panel transparency - background slider
-    const buffsBgSlider = container.querySelector<HTMLInputElement>('[data-setting="buffsBg"]');
-    if (buffsBgSlider) {
-        buffsBgSlider.addEventListener('input', () => {
-            const percent = parseInt(buffsBgSlider.value) || 100;
-            store.setCombatBuffsOpacityLayer('background', percent / 100);
-            const display = container.querySelector('[data-buffs-bg-display]');
-            if (display) display.textContent = `${percent}%`;
-        });
-    }
-
-    // Combat buffs panel transparency - foreground slider
-    const buffsFgSlider = container.querySelector<HTMLInputElement>('[data-setting="buffsFg"]');
-    if (buffsFgSlider) {
-        buffsFgSlider.addEventListener('input', () => {
-            const percent = parseInt(buffsFgSlider.value) || 100;
-            store.setCombatBuffsOpacityLayer('foreground', percent / 100);
-            const display = container.querySelector('[data-buffs-fg-display]');
             if (display) display.textContent = `${percent}%`;
         });
     }
