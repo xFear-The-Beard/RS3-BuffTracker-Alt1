@@ -48,6 +48,10 @@ export interface AppState {
     noSoulboundLantern: boolean;
     /** Overlay scale factor (0.5 to 2.0, default 1.0) */
     overlayScale: number;
+    /** When false, the combat gauge renders icons and live data only, no panel/frames/labels. */
+    combatGaugeBackgroundVisible: boolean;
+    /** When false, the combat buffs panel renders rows only, no outer panel or header. */
+    combatBuffsBackgroundVisible: boolean;
     /** Ability IDs hidden from the gauge */
     hiddenAbilities: string[];
     /** Set when a saved calibration is older than 7 days. Banner dismissed for the current session by setCalibrationStaleDismissed. */
@@ -168,6 +172,8 @@ class Store {
             combatBuffTracking: loadCombatBuffTracking(),
             noSoulboundLantern: loadUserSetting('noSoulboundLantern') === 'true',
             overlayScale: parseFloat(loadUserSetting('overlayScale') || '1.0') || 1.0,
+            combatGaugeBackgroundVisible: loadUserSetting('combatGaugeBackgroundVisible') !== 'false',
+            combatBuffsBackgroundVisible: loadUserSetting('combatBuffsBackgroundVisible') !== 'false',
             hiddenAbilities: JSON.parse(loadUserSetting('hiddenAbilities') || '[]'),
             calibrationStale: false,
             calibrationStaleDismissed: false,
@@ -344,6 +350,22 @@ class Store {
         if (this.state.overlayScale !== clamped) {
             this.state = { ...this.state, overlayScale: clamped };
             saveUserSetting('overlayScale', String(clamped));
+            this.notify();
+        }
+    }
+
+    setCombatGaugeBackgroundVisible(value: boolean): void {
+        if (this.state.combatGaugeBackgroundVisible !== value) {
+            this.state = { ...this.state, combatGaugeBackgroundVisible: value };
+            saveUserSetting('combatGaugeBackgroundVisible', String(value));
+            this.notify();
+        }
+    }
+
+    setCombatBuffsBackgroundVisible(value: boolean): void {
+        if (this.state.combatBuffsBackgroundVisible !== value) {
+            this.state = { ...this.state, combatBuffsBackgroundVisible: value };
+            saveUserSetting('combatBuffsBackgroundVisible', String(value));
             this.notify();
         }
     }

@@ -596,6 +596,7 @@ function runSingleDetect(mode: 'buff' | 'debuff' | 'enemy'): void {
 }
 
 function startHoverScan(mode: 'buff' | 'debuff' | 'enemy'): void {
+    stopReading();
     detectStep = mode === 'buff' ? 'scanning-buff' : mode === 'debuff' ? 'scanning-debuff' : 'scanning-enemy';
     frozenDetectResult = null;
 

@@ -158,7 +158,20 @@ function renderOverlayStyleSection(current: OverlayStyle): string {
         `;
     }
 
-    html += '</div></div>';
+    html += '</div>';
+
+    const gaugeBgVisible = state.combatGaugeBackgroundVisible;
+    html += `
+        <div style="display:flex; align-items:center; justify-content:flex-end; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); gap:8px;">
+            <span style="font-size:10px; color:rgba(255,255,255,0.6); font-weight:normal;">Show Overlay Background</span>
+            <label class="settings-toggle-switch" title="Toggle the decorative panel, frames, and labels. Icons, timers, and live data remain visible when off.">
+                <input type="checkbox" data-setting="combatGaugeBackgroundVisible" ${gaugeBgVisible ? 'checked' : ''}>
+                <span class="settings-toggle-slider"></span>
+            </label>
+        </div>
+    `;
+
+    html += '</div>';
     return html;
 }
 
@@ -281,6 +294,18 @@ function renderCombatBuffsSection(): string {
             </span>
         </div>
     `;
+
+    const buffsBgVisible = state.combatBuffsBackgroundVisible;
+    html += `
+        <div style="display:flex; align-items:center; justify-content:flex-end; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); gap:8px;">
+            <span style="font-size:10px; color:rgba(255,255,255,0.6); font-weight:normal;">Show Panel Background</span>
+            <label class="settings-toggle-switch" title="Toggle the decorative panel header and row frames. Buff names and timers remain visible when off.">
+                <input type="checkbox" data-setting="combatBuffsBackgroundVisible" ${buffsBgVisible ? 'checked' : ''}>
+                <span class="settings-toggle-slider"></span>
+            </label>
+        </div>
+    `;
+
     html += '</div>';
 
     for (const cat of COMBAT_BUFF_CATEGORIES) {
@@ -844,6 +869,22 @@ function wireEventHandlers(container: HTMLElement): void {
     if (lanternCb) {
         lanternCb.addEventListener('change', () => {
             store.setNoSoulboundLantern(lanternCb.checked);
+        });
+    }
+
+    // Combat gauge background visibility toggle
+    const gaugeBgCb = container.querySelector<HTMLInputElement>('[data-setting="combatGaugeBackgroundVisible"]');
+    if (gaugeBgCb) {
+        gaugeBgCb.addEventListener('change', () => {
+            store.setCombatGaugeBackgroundVisible(gaugeBgCb.checked);
+        });
+    }
+
+    // Combat buffs panel background visibility toggle
+    const buffsBgCb = container.querySelector<HTMLInputElement>('[data-setting="combatBuffsBackgroundVisible"]');
+    if (buffsBgCb) {
+        buffsBgCb.addEventListener('change', () => {
+            store.setCombatBuffsBackgroundVisible(buffsBgCb.checked);
         });
     }
 

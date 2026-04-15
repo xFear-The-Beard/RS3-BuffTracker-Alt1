@@ -20,6 +20,7 @@ interface BuffEntry {
  * Shows tracked buffs with their status: active (green), expired (red), or hidden.
  */
 export class CombatBuffsRenderer implements OverlayRenderer {
+    private _showBg: boolean = true;
 
     /**
      * Collect renderable buff entries based on tracking mode and state.
@@ -107,6 +108,7 @@ export class CombatBuffsRenderer implements OverlayRenderer {
     // =====================================================================
 
     renderToCanvas(canvas: HTMLCanvasElement, state: AppState, _styleDef?: StyleDef): void {
+        this._showBg = state.combatBuffsBackgroundVisible;
         const buffs = this.getVisibleBuffs(state);
         const dims = this.getMinDimensions(state);
         canvas.width = dims.width;
@@ -115,34 +117,40 @@ export class CombatBuffsRenderer implements OverlayRenderer {
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Background
-        ctx.fillStyle = 'rgba(8, 6, 16, 225)';
-        roundRect(ctx, 0, 0, canvas.width, canvas.height, 8);
-        ctx.fill();
+        if (this._showBg) {
+            // Background
+            ctx.fillStyle = 'rgba(8, 6, 16, 225)';
+            roundRect(ctx, 0, 0, canvas.width, canvas.height, 8);
+            ctx.fill();
 
-        // Border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, canvas.width - 1, canvas.height - 1, 8);
-        ctx.stroke();
+            // Border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, 0.5, 0.5, canvas.width - 1, canvas.height - 1, 8);
+            ctx.stroke();
+        }
 
         const padX = 14;
         let y = 10;
 
-        // Header
-        ctx.font = '500 12px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = '#fcd34d';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Combat Buffs', padX, y + 6);
+        if (this._showBg) {
+            // Header
+            ctx.font = '500 12px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = '#fcd34d';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Combat Buffs', padX, y + 6);
+        }
         y += 22;
 
         if (buffs.length === 0) {
-            ctx.font = '10px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('No tracked buffs', canvas.width / 2, y + 10);
+            if (this._showBg) {
+                ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No tracked buffs', canvas.width / 2, y + 10);
+            }
             return;
         }
 
@@ -155,12 +163,13 @@ export class CombatBuffsRenderer implements OverlayRenderer {
             const bgAlpha = 0.08;
             const [br, bg, bb] = buff.active ? [34, 197, 94] : [239, 68, 68];
 
-            // Row background
-            ctx.fillStyle = `rgba(${br},${bg},${bb},${bgAlpha})`;
-            roundRect(ctx, padX, y, w, rowH, 5);
-            ctx.fill();
+            if (this._showBg) {
+                // Row background
+                ctx.fillStyle = `rgba(${br},${bg},${bb},${bgAlpha})`;
+                roundRect(ctx, padX, y, w, rowH, 5);
+                ctx.fill();
+            }
 
-            // Left border
             ctx.fillStyle = borderColor;
             ctx.fillRect(padX, y + 4, 2, rowH - 8);
 

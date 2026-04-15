@@ -41,14 +41,14 @@ const BORDER_MIN_DIFF = 15;
  * Check if a pixel is a green buff border pixel.
  */
 function isGreenBorder(r: number, g: number, b: number): boolean {
-    return g > 40 && (g - b) > BORDER_MIN_DIFF && (g - r) > -15;
+    return Math.abs(r - 90) <= 15 && Math.abs(g - 150) <= 15 && Math.abs(b - 25) <= 15;
 }
 
 /**
  * Check if a pixel is a red debuff border pixel.
  */
 function isRedBorder(r: number, g: number, b: number): boolean {
-    return r > 60 && (r - g) > 20 && (r - b) > 10;
+    return Math.abs(r - 204) <= 15 && Math.abs(g - 0) <= 15 && Math.abs(b - 0) <= 15;
 }
 
 /**

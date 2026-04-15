@@ -17,6 +17,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
  * - Melee: diamond-rotated (45deg) frames, channel progress bars
  */
 export class ThemedFramesRenderer implements OverlayRenderer {
+    private _showBg: boolean = true;
 
     // =====================================================================
     // HTML Rendering - uses canvas in container for consistency
@@ -42,6 +43,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        this._showBg = state.combatGaugeBackgroundVisible;
         const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
         canvas.width = Math.round(dims.width * scale);
@@ -55,22 +57,24 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const style = def.id as CombatStyle;
         const [sr, sg, sb] = hexToRgb(def.color);
 
-        // Background with style-specific tint
-        const bgColors: Record<string, string> = {
-            necromancy: 'rgba(8, 4, 18, 235)',
-            magic: 'rgba(6, 4, 16, 235)',
-            ranged: 'rgba(4, 8, 4, 235)',
-            melee: 'rgba(12, 4, 4, 235)',
-        };
-        ctx.fillStyle = bgColors[style] || 'rgba(8, 6, 16, 235)';
-        roundRect(ctx, 0, 0, dims.width, dims.height, 10);
-        ctx.fill();
+        if (this._showBg) {
+            // Background with style-specific tint
+            const bgColors: Record<string, string> = {
+                necromancy: 'rgba(8, 4, 18, 235)',
+                magic: 'rgba(6, 4, 16, 235)',
+                ranged: 'rgba(4, 8, 4, 235)',
+                melee: 'rgba(12, 4, 4, 235)',
+            };
+            ctx.fillStyle = bgColors[style] || 'rgba(8, 6, 16, 235)';
+            roundRect(ctx, 0, 0, dims.width, dims.height, 10);
+            ctx.fill();
 
-        // Border
-        ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.25)`;
-        ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 10);
-        ctx.stroke();
+            // Border
+            ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.25)`;
+            ctx.lineWidth = 1;
+            roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 10);
+            ctx.stroke();
+        }
 
         const padX = 20;
         let y = 16;
@@ -156,9 +160,11 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const conjureAbilities = def.abilities.filter(a => conjureIds.includes(a.id));
         if (conjureAbilities.length > 0) {
             y += 2;
-            // Divider
-            ctx.fillStyle = `rgba(${sr},${sg},${sb},0.12)`;
-            ctx.fillRect(padX, y, dims.width - padX * 2, 1);
+            if (this._showBg) {
+                // Divider
+                ctx.fillStyle = `rgba(${sr},${sg},${sb},0.12)`;
+                ctx.fillRect(padX, y, dims.width - padX * 2, 1);
+            }
             y += 8;
             y = this.drawThemedConjures(ctx, conjureAbilities, state, padX, y, dims.width - padX * 2);
         }
@@ -170,8 +176,10 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             );
             if (channelAbilities.length > 0) {
                 y += 2;
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
-                ctx.fillRect(padX, y, dims.width - padX * 2, 1);
+                if (this._showBg) {
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+                    ctx.fillRect(padX, y, dims.width - padX * 2, 1);
+                }
                 y += 8;
                 y = this.drawChannelBars(ctx, channelAbilities, state, padX, y, dims.width - padX * 2);
             }
@@ -225,55 +233,50 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const active = abilityState?.active || false;
         const [r, g, b] = hexToRgb(ability.color);
 
-        // Frame background
-        ctx.fillStyle = active
-            ? `rgba(${r},${g},${b},0.1)`
-            : 'rgba(255,255,255,0.03)';
-        roundRect(ctx, x, y, size, size, borderRadius);
-        ctx.fill();
-
-        // Frame border
-        ctx.strokeStyle = active
-            ? `rgba(${r},${g},${b},0.5)`
-            : 'rgba(255,255,255,0.1)';
-        ctx.lineWidth = 1.5;
-        roundRect(ctx, x + 0.5, y + 0.5, size - 1, size - 1, borderRadius);
-        ctx.stroke();
-
-        // Icon image or fallback dot
-        this.drawIcon(ctx, ability.refImage, x + 2, y + 2, size - 4, active, ability.color);
-
-        // Timer overlay at bottom
-        if (active) {
-            const overlayH = 14;
-            const overlayY = y + size - overlayH;
-
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.beginPath();
-            ctx.moveTo(x, overlayY);
-            ctx.lineTo(x + size, overlayY);
-            ctx.lineTo(x + size, y + size - borderRadius);
-            ctx.arcTo(x + size, y + size, x + size - borderRadius, y + size, borderRadius);
-            ctx.lineTo(x + borderRadius, y + size);
-            ctx.arcTo(x, y + size, x, y + size - borderRadius, borderRadius);
-            ctx.closePath();
+        if (this._showBg) {
+            // Frame background
+            ctx.fillStyle = active
+                ? `rgba(${r},${g},${b},0.1)`
+                : 'rgba(255,255,255,0.03)';
+            roundRect(ctx, x, y, size, size, borderRadius);
             ctx.fill();
 
-            const text = formatTimeShort(abilityState?.time || 0);
-
-            ctx.font = '500 11px Consolas, "SF Mono", monospace';
-            ctx.fillStyle = ability.color;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, x + size / 2, overlayY + overlayH / 2);
+            // Frame border
+            ctx.strokeStyle = active
+                ? `rgba(${r},${g},${b},0.5)`
+                : 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1.5;
+            roundRect(ctx, x + 0.5, y + 0.5, size - 1, size - 1, borderRadius);
+            ctx.stroke();
         }
 
-        // Label below
-        ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(ability.shortName, x + size / 2, y + size + 4);
+        this.drawIcon(ctx, ability.refImage, x + 2, y + 2, size - 4, active, ability.color);
+
+        // Timer text, outlined in minimal mode for contrast against the game.
+        if (active) {
+            const text = formatTimeShort(abilityState?.time || 0);
+            ctx.font = '500 11px Consolas, "SF Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const textX = x + size / 2;
+            const textY = y + size - 7;
+            if (!this._showBg) {
+                ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+                ctx.lineWidth = 2;
+                ctx.strokeText(text, textX, textY);
+            }
+            ctx.fillStyle = ability.color;
+            ctx.fillText(text, textX, textY);
+        }
+
+        if (this._showBg) {
+            // Label below
+            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName, x + size / 2, y + size + 4);
+        }
     }
 
     private drawDiamondIconFrame(
@@ -288,46 +291,53 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const cy = y + size / 2;
         const half = size / 2 - 2;
 
-        // Diamond shape
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - half);
-        ctx.lineTo(cx + half, cy);
-        ctx.lineTo(cx, cy + half);
-        ctx.lineTo(cx - half, cy);
-        ctx.closePath();
+        if (this._showBg) {
+            // Diamond shape
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - half);
+            ctx.lineTo(cx + half, cy);
+            ctx.lineTo(cx, cy + half);
+            ctx.lineTo(cx - half, cy);
+            ctx.closePath();
 
-        ctx.fillStyle = active
-            ? `rgba(${r},${g},${b},0.06)`
-            : 'rgba(255,255,255,0.02)';
-        ctx.fill();
+            ctx.fillStyle = active
+                ? `rgba(${r},${g},${b},0.06)`
+                : 'rgba(255,255,255,0.02)';
+            ctx.fill();
 
-        ctx.strokeStyle = active
-            ? `rgba(${r},${g},${b},0.5)`
-            : 'rgba(255,255,255,0.08)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+            ctx.strokeStyle = active
+                ? `rgba(${r},${g},${b},0.5)`
+                : 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
 
-        // Icon image or fallback dot
         const iconDrawSize = half;
         this.drawIcon(ctx, ability.refImage, cx - iconDrawSize / 2, cy - iconDrawSize / 2 - 4, iconDrawSize, active, ability.color);
 
-        // Timer inside diamond
+        // Timer inside diamond, outlined in minimal mode.
         if (active) {
             const text = formatTimeShort(abilityState?.time || 0);
-
             ctx.font = '500 10px Consolas, "SF Mono", monospace';
-            ctx.fillStyle = ability.color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            if (!this._showBg) {
+                ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+                ctx.lineWidth = 2;
+                ctx.strokeText(text, cx, cy + 8);
+            }
+            ctx.fillStyle = ability.color;
             ctx.fillText(text, cx, cy + 8);
         }
 
-        // Label below diamond
-        ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(ability.shortName, cx, y + size + 4);
+        if (this._showBg) {
+            // Label below diamond
+            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName, cx, y + size + 4);
+        }
     }
 
     /**
@@ -352,12 +362,14 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             const maxStacks = ability.maxStacks || 1;
             const [r, g, b] = hexToRgb(ability.color);
 
-            // Title
-            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = `rgba(${r},${g},${b},0.6)`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText(ability.shortName.toUpperCase(), gx + groupW / 2, y);
+            if (this._showBg) {
+                // Title
+                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = `rgba(${r},${g},${b},0.6)`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(ability.shortName.toUpperCase(), gx + groupW / 2, y);
+            }
 
             if (style === 'necromancy' && ability.id === 'souls') {
                 // Soul orbs
@@ -461,23 +473,29 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             const active = cState?.active || false;
             const cx = ix + itemW / 2;
 
-            // Conjure icon frame
-            ctx.fillStyle = active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)';
-            roundRect(ctx, cx - iconW / 2, y, iconW, iconH, 4);
-            ctx.fill();
-            ctx.strokeStyle = active ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)';
-            ctx.lineWidth = 1;
-            roundRect(ctx, cx - iconW / 2 + 0.5, y + 0.5, iconW - 1, iconH - 1, 4);
-            ctx.stroke();
+            if (this._showBg) {
+                // Conjure icon frame
+                ctx.fillStyle = active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)';
+                roundRect(ctx, cx - iconW / 2, y, iconW, iconH, 4);
+                ctx.fill();
+                ctx.strokeStyle = active ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                roundRect(ctx, cx - iconW / 2 + 0.5, y + 0.5, iconW - 1, iconH - 1, 4);
+                ctx.stroke();
+            }
 
             // Conjure icon or fallback shape
             const conjIconSize = Math.min(iconW - 4, iconH - 4);
             this.drawIcon(ctx, conjure.refImage, cx - conjIconSize / 2, y + (iconH - conjIconSize) / 2, conjIconSize, active, '#22c55e');
 
-            // Label
-            ctx.font = '8px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = active ? '#86efac' : 'rgba(255,255,255,0.3)';
-            ctx.fillText(conjure.shortName, cx, y + iconH + 8);
+            if (this._showBg) {
+                // Label
+                ctx.font = '8px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = active ? '#86efac' : 'rgba(255,255,255,0.3)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(conjure.shortName, cx, y + iconH + 8);
+            }
 
             ix += itemW + gap;
         }
@@ -506,19 +524,20 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const barH = 36;
         const barW = totalW;
 
-        // Bar container
-        ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
-        roundRect(ctx, x, y, barW, barH, 5);
-        ctx.fill();
+        if (this._showBg) {
+            // Bar container
+            ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
+            roundRect(ctx, x, y, barW, barH, 5);
+            ctx.fill();
 
-        // Title
-        ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(ability.shortName.toUpperCase(), x + barW / 2, y + 4);
+            // Title
+            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName.toUpperCase(), x + barW / 2, y + 4);
+        }
 
-        // Icon
         const iconSize = 14;
         this.drawIcon(ctx, ability.refImage, x + 6, y + 4, iconSize, active, ability.color);
 
@@ -528,9 +547,11 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const pBarW = barW - 12;
         const pBarH = 4;
 
-        ctx.fillStyle = 'rgba(255,255,255,0.06)';
-        roundRect(ctx, pBarX, pBarY, pBarW, pBarH, 2);
-        ctx.fill();
+        if (this._showBg) {
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            roundRect(ctx, pBarX, pBarY, pBarW, pBarH, 2);
+            ctx.fill();
+        }
 
         if (active && pct > 0) {
             const fillW = Math.max(pct * pBarW, pBarH);
@@ -570,27 +591,30 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             const time = abilityState?.time || 0;
             const [r, g, b] = hexToRgb(ability.color);
 
-            // Bar container
-            ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
-            roundRect(ctx, bx, y, barW, barTotalH, 5);
-            ctx.fill();
+            if (this._showBg) {
+                // Bar container
+                ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
+                roundRect(ctx, bx, y, barW, barTotalH, 5);
+                ctx.fill();
 
-            // Title
-            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText(ability.shortName.toUpperCase(), bx + barW / 2, y + 4);
+                // Title
+                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(ability.shortName.toUpperCase(), bx + barW / 2, y + 4);
+            }
 
-            // Progress bar
             const pBarX = bx + 6;
             const pBarY = y + 17;
             const pBarW = barW - 12;
             const pBarH = 4;
 
-            ctx.fillStyle = 'rgba(255,255,255,0.06)';
-            roundRect(ctx, pBarX, pBarY, pBarW, pBarH, 2);
-            ctx.fill();
+            if (this._showBg) {
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                roundRect(ctx, pBarX, pBarY, pBarW, pBarH, 2);
+                ctx.fill();
+            }
 
             if (active && time > 0) {
                 const pct = Math.min(time / 10, 1);

@@ -31,6 +31,7 @@ const INCANTATION_COLORS: Record<string, string> = {
  * no groups are defined (for backward compatibility).
  */
 export class ModernRenderer implements OverlayRenderer {
+    private _showBg: boolean = true;
 
     // =====================================================================
     // Canvas Rendering - Necromancy-specific mockup layout
@@ -40,6 +41,7 @@ export class ModernRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        this._showBg = state.combatGaugeBackgroundVisible;
         const scale = state.overlayScale || 1.0;
 
         // Necromancy gets the custom mockup layout; others fall back
@@ -67,19 +69,21 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background: dark purple gradient
-        const grad = ctx.createLinearGradient(0, 0, 0, dims.height);
-        grad.addColorStop(0, 'rgba(12,8,24,0.97)');
-        grad.addColorStop(1, 'rgba(8,6,18,0.98)');
-        ctx.fillStyle = grad;
-        roundRect(ctx, 0, 0, dims.width, dims.height, 6);
-        ctx.fill();
+        if (this._showBg) {
+            // Background: dark purple gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, dims.height);
+            grad.addColorStop(0, 'rgba(12,8,24,0.97)');
+            grad.addColorStop(1, 'rgba(8,6,18,0.98)');
+            ctx.fillStyle = grad;
+            roundRect(ctx, 0, 0, dims.width, dims.height, 6);
+            ctx.fill();
 
-        // Border: purple tint
-        ctx.strokeStyle = 'rgba(167,139,250,0.12)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
-        ctx.stroke();
+            // Border: purple tint
+            ctx.strokeStyle = 'rgba(167,139,250,0.12)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
+            ctx.stroke();
+        }
 
         const hidden = new Set([...state.hiddenAbilities, ...GAUGE_EXCLUDED_IDS]);
         let y = PAD_Y;
@@ -177,10 +181,7 @@ export class ModernRenderer implements OverlayRenderer {
     ): number {
         const [tr, tg, tb] = hexToRgb(themeColor);
 
-        // Panel background + border
-        ctx.fillStyle = `rgba(${tr},${tg},${tb},0.04)`;
-        roundRect(ctx, x, y, w, 0.1, 4); // placeholder - we'll draw full height after measuring
-        // We need to know final height - compute it first
+        // Compute dimensions (no drawing)
         const labelH = 12; // label line height
         const cols = 2;
         const cellH = 22;
@@ -189,27 +190,29 @@ export class ModernRenderer implements OverlayRenderer {
         const gridH = rows * cellH + (rows - 1) * cellGap;
         const panelH = 5 + labelH + gridH + 4; // padding-top + label + grid + padding-bottom
 
-        // Draw panel bg
-        ctx.fillStyle = `rgba(${tr},${tg},${tb},0.04)`;
-        roundRect(ctx, x, y, w, panelH, 4);
-        ctx.fill();
+        if (this._showBg) {
+            // Draw panel bg
+            ctx.fillStyle = `rgba(${tr},${tg},${tb},0.04)`;
+            roundRect(ctx, x, y, w, panelH, 4);
+            ctx.fill();
 
-        // Panel border
-        ctx.strokeStyle = `rgba(${tr},${tg},${tb},0.1)`;
-        ctx.lineWidth = 1;
-        roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
-        ctx.stroke();
+            // Panel border
+            ctx.strokeStyle = `rgba(${tr},${tg},${tb},0.1)`;
+            ctx.lineWidth = 1;
+            roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
+            ctx.stroke();
 
-        // Section label
-        let cy = y + 5;
-        ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = `rgba(${tr},${tg},${tb},0.55)`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.letterSpacing = '1px';
-        ctx.fillText(label, x + 5, cy);
-        ctx.letterSpacing = '0px';
-        cy += labelH;
+            // Section label
+            ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = `rgba(${tr},${tg},${tb},0.55)`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.letterSpacing = '1px';
+            ctx.fillText(label, x + 5, y + 5);
+            ctx.letterSpacing = '0px';
+        }
+
+        const cy = y + 5 + labelH;
 
         // Grid cells
         const innerPad = 5;
@@ -223,65 +226,75 @@ export class ModernRenderer implements OverlayRenderer {
             const cellY = cy + row * (cellH + cellGap);
             const [cr, cg, cb] = hexToRgb(item.color);
 
-            if (item.isActive) {
-                // Active cell background
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},0.08)`;
-                roundRect(ctx, cx, cellY, cellW, cellH, 3);
-                ctx.fill();
-                // Left accent
-                ctx.fillStyle = item.color;
-                ctx.fillRect(cx, cellY + 3, 1.5, cellH - 6);
-            } else {
-                // Inactive cell
-                ctx.fillStyle = 'rgba(255,255,255,0.015)';
-                roundRect(ctx, cx, cellY, cellW, cellH, 3);
-                ctx.fill();
-                ctx.fillStyle = 'rgba(255,255,255,0.06)';
-                ctx.fillRect(cx, cellY + 3, 1.5, cellH - 6);
-            }
-
             // Icon box (18x18)
             const iconSize = 18;
             const iconX = cx + 4;
             const iconY = cellY + (cellH - iconSize) / 2;
 
-            if (item.isActive) {
-                ctx.fillStyle = `rgba(${cr},${cg},${cb},0.12)`;
-                roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
-                ctx.fill();
-                ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.18)`;
-                ctx.lineWidth = 1;
-                roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
-                ctx.stroke();
-            } else {
-                ctx.fillStyle = 'rgba(255,255,255,0.03)';
-                roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-                ctx.lineWidth = 1;
-                roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
-                ctx.stroke();
+            ctx.globalAlpha = item.isActive ? 1.0 : 0.35;
+
+            if (this._showBg) {
+                if (item.isActive) {
+                    // Active cell background
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.08)`;
+                    roundRect(ctx, cx, cellY, cellW, cellH, 3);
+                    ctx.fill();
+                    // Left accent
+                    ctx.fillStyle = item.color;
+                    ctx.fillRect(cx, cellY + 3, 1.5, cellH - 6);
+                } else {
+                    // Inactive cell
+                    ctx.fillStyle = 'rgba(255,255,255,0.015)';
+                    roundRect(ctx, cx, cellY, cellW, cellH, 3);
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                    ctx.fillRect(cx, cellY + 3, 1.5, cellH - 6);
+                }
+
+                if (item.isActive) {
+                    ctx.fillStyle = `rgba(${cr},${cg},${cb},0.12)`;
+                    roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
+                    ctx.fill();
+                    ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.18)`;
+                    ctx.lineWidth = 1;
+                    roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+                    roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+                    ctx.lineWidth = 1;
+                    roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
+                    ctx.stroke();
+                }
             }
+
             this.drawIcon(ctx, item.refImage, iconX, iconY, iconSize, item.isActive, item.color);
 
             // Text to the right of icon
             const textX = iconX + iconSize + 3;
             const textMaxW = cellW - iconSize - 10;
 
-            // Name (7px)
-            ctx.font = '7px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = item.isActive ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.18)';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            const name = this.truncateText(ctx, item.shortName, textMaxW);
-            ctx.fillText(name, textX, cellY + 2);
+            if (this._showBg) {
+                // Name (7px) - label, bg
+                ctx.font = '7px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = item.isActive ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.18)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                const name = this.truncateText(ctx, item.shortName, textMaxW);
+                ctx.fillText(name, textX, cellY + 2);
+            }
 
-            // Timer (9px monospace)
+            // Timer (9px monospace) - live data, fg
             ctx.font = '500 9px Consolas, "SF Mono", monospace';
             ctx.fillStyle = item.isActive ? item.color : 'rgba(255,255,255,0.1)';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
             const timeStr = item.isActive ? (item.time > 0 ? formatTimeShort(item.time) : '\u2014') : '\u2014';
             ctx.fillText(timeStr, textX, cellY + cellH - 1);
+
+            ctx.globalAlpha = 1.0;
         }
 
         return panelH;
@@ -303,18 +316,20 @@ export class ModernRenderer implements OverlayRenderer {
         const isActive = as?.active && (as.time > 0 || bloat.type === 'enemy-debuff');
         const barH = 26;
 
-        // Bar background
-        ctx.fillStyle = 'rgba(120,200,80,0.03)';
-        roundRect(ctx, x, y, w, barH, 4);
-        ctx.fill();
+        if (this._showBg) {
+            // Bar background
+            ctx.fillStyle = 'rgba(120,200,80,0.03)';
+            roundRect(ctx, x, y, w, barH, 4);
+            ctx.fill();
 
-        // Bar border
-        ctx.strokeStyle = 'rgba(140,80,200,0.12)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, x + 0.5, y + 0.5, w - 1, barH - 1, 4);
-        ctx.stroke();
+            // Bar border
+            ctx.strokeStyle = 'rgba(140,80,200,0.12)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x + 0.5, y + 0.5, w - 1, barH - 1, 4);
+            ctx.stroke();
+        }
 
-        // Progress fill
+        // Progress fill (fg - live countdown)
         if (isActive && bloat.internalDuration) {
             const progress = Math.min(1, as!.time / bloat.internalDuration);
             if (progress > 0) {
@@ -338,23 +353,29 @@ export class ModernRenderer implements OverlayRenderer {
         const iconSize = 16;
         const iconX = x + 8;
         const iconY = y + (barH - iconSize) / 2;
-        ctx.fillStyle = 'rgba(140,80,200,0.15)';
-        roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(140,80,200,0.2)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
-        ctx.stroke();
+
+        if (this._showBg) {
+            ctx.fillStyle = 'rgba(140,80,200,0.15)';
+            roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(140,80,200,0.2)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
+            ctx.stroke();
+        }
+
         this.drawIcon(ctx, bloat.refImage, iconX, iconY, iconSize, isActive, '#8c50c8');
 
-        // "Bloat" label
-        ctx.font = '500 10px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Bloat', iconX + iconSize + 6, y + barH / 2);
+        if (this._showBg) {
+            // "Bloat" label
+            ctx.font = '500 10px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Bloat', iconX + iconSize + 6, y + barH / 2);
+        }
 
-        // Timer (right)
+        // Timer (right) - live data
         ctx.font = '500 12px Consolas, "SF Mono", monospace';
         ctx.fillStyle = isActive ? '#8c50c8' : 'rgba(255,255,255,0.15)';
         ctx.textAlign = 'right';
@@ -398,44 +419,52 @@ export class ModernRenderer implements OverlayRenderer {
             const as = state.abilities['living_death'];
             const isActive = as?.active && as.time > 0;
 
-            // Background
-            ctx.fillStyle = isActive ? 'rgba(192,132,252,0.06)' : 'rgba(255,255,255,0.015)';
-            roundRect(ctx, x, y, ldW, slotH, 4);
-            ctx.fill();
-
-            // Border
-            ctx.strokeStyle = isActive ? 'rgba(192,132,252,0.12)' : 'rgba(255,255,255,0.04)';
-            ctx.lineWidth = 1;
-            roundRect(ctx, x + 0.5, y + 0.5, ldW - 1, slotH - 1, 4);
-            ctx.stroke();
-
-            // Left accent (2px)
-            ctx.fillStyle = isActive ? '#c084fc' : 'rgba(255,255,255,0.06)';
-            ctx.fillRect(x, y + 4, 2, slotH - 8);
-
-            // Icon (30x30)
             const iconX = x + 7;
             const iconY = y + (slotH - iconSize) / 2;
-            ctx.fillStyle = isActive ? 'rgba(192,132,252,0.1)' : 'rgba(255,255,255,0.02)';
-            roundRect(ctx, iconX, iconY, iconSize, iconSize, 4);
-            ctx.fill();
-            ctx.strokeStyle = isActive ? 'rgba(192,132,252,0.15)' : 'rgba(255,255,255,0.04)';
-            ctx.lineWidth = 1;
-            roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 4);
-            ctx.stroke();
+
+            if (this._showBg) {
+                // Background
+                ctx.fillStyle = isActive ? 'rgba(192,132,252,0.06)' : 'rgba(255,255,255,0.015)';
+                roundRect(ctx, x, y, ldW, slotH, 4);
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = isActive ? 'rgba(192,132,252,0.12)' : 'rgba(255,255,255,0.04)';
+                ctx.lineWidth = 1;
+                roundRect(ctx, x + 0.5, y + 0.5, ldW - 1, slotH - 1, 4);
+                ctx.stroke();
+
+                // Left accent (2px)
+                ctx.fillStyle = isActive ? '#c084fc' : 'rgba(255,255,255,0.06)';
+                ctx.fillRect(x, y + 4, 2, slotH - 8);
+
+                // Icon box frame
+                ctx.fillStyle = isActive ? 'rgba(192,132,252,0.1)' : 'rgba(255,255,255,0.02)';
+                roundRect(ctx, iconX, iconY, iconSize, iconSize, 4);
+                ctx.fill();
+                ctx.strokeStyle = isActive ? 'rgba(192,132,252,0.15)' : 'rgba(255,255,255,0.04)';
+                ctx.lineWidth = 1;
+                roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 4);
+                ctx.stroke();
+            }
+
             this.drawIcon(ctx, ldDef!.refImage, iconX, iconY, iconSize, isActive, '#c084fc');
 
-            // Name
             const textX = iconX + iconSize + 6;
-            ctx.font = '8px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText('Living Death', textX, y + 6);
+
+            if (this._showBg) {
+                // Name label
+                ctx.font = '8px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText('Living Death', textX, y + 6);
+            }
 
             // Timer (large)
             ctx.font = '500 16px Consolas, "SF Mono", monospace';
             ctx.fillStyle = isActive ? '#c084fc' : 'rgba(255,255,255,0.1)';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
             ctx.fillText(isActive ? formatTimeShort(as!.time) : '\u2014', textX, y + slotH - 5);
         }
@@ -447,38 +476,46 @@ export class ModernRenderer implements OverlayRenderer {
             const as = state.abilities['death_skulls'];
             const isActive = as?.active && as.time > 0;
 
-            ctx.fillStyle = isActive ? 'rgba(167,139,250,0.04)' : 'rgba(255,255,255,0.015)';
-            roundRect(ctx, dsX, y, dsWActual, slotH, 4);
-            ctx.fill();
-
-            ctx.strokeStyle = isActive ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.04)';
-            ctx.lineWidth = 1;
-            roundRect(ctx, dsX + 0.5, y + 0.5, dsWActual - 1, slotH - 1, 4);
-            ctx.stroke();
-
-            ctx.fillStyle = isActive ? 'rgba(167,139,250,0.3)' : 'rgba(255,255,255,0.06)';
-            ctx.fillRect(dsX, y + 4, 2, slotH - 8);
-
             const iconX = dsX + 7;
             const iconY = y + (slotH - iconSize) / 2;
-            ctx.fillStyle = isActive ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.02)';
-            roundRect(ctx, iconX, iconY, iconSize, iconSize, 4);
-            ctx.fill();
-            ctx.strokeStyle = isActive ? 'rgba(167,139,250,0.1)' : 'rgba(255,255,255,0.04)';
-            ctx.lineWidth = 1;
-            roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 4);
-            ctx.stroke();
+
+            if (this._showBg) {
+                ctx.fillStyle = isActive ? 'rgba(167,139,250,0.04)' : 'rgba(255,255,255,0.015)';
+                roundRect(ctx, dsX, y, dsWActual, slotH, 4);
+                ctx.fill();
+
+                ctx.strokeStyle = isActive ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.04)';
+                ctx.lineWidth = 1;
+                roundRect(ctx, dsX + 0.5, y + 0.5, dsWActual - 1, slotH - 1, 4);
+                ctx.stroke();
+
+                ctx.fillStyle = isActive ? 'rgba(167,139,250,0.3)' : 'rgba(255,255,255,0.06)';
+                ctx.fillRect(dsX, y + 4, 2, slotH - 8);
+
+                ctx.fillStyle = isActive ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.02)';
+                roundRect(ctx, iconX, iconY, iconSize, iconSize, 4);
+                ctx.fill();
+                ctx.strokeStyle = isActive ? 'rgba(167,139,250,0.1)' : 'rgba(255,255,255,0.04)';
+                ctx.lineWidth = 1;
+                roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 4);
+                ctx.stroke();
+            }
+
             this.drawIcon(ctx, dsDef!.refImage, iconX, iconY, iconSize, isActive, '#a78bfa');
 
             const textX = iconX + iconSize + 6;
-            ctx.font = '8px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            ctx.fillText('Death Skulls', textX, y + 6);
+
+            if (this._showBg) {
+                ctx.font = '8px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText('Death Skulls', textX, y + 6);
+            }
 
             ctx.font = '500 16px Consolas, "SF Mono", monospace';
             ctx.fillStyle = isActive ? '#a78bfa' : 'rgba(255,255,255,0.1)';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'bottom';
             ctx.fillText(isActive ? formatTimeShort(as!.time) : '\u2014', textX, y + slotH - 5);
         }
@@ -543,23 +580,25 @@ export class ModernRenderer implements OverlayRenderer {
 
         const panelH = 52;
 
-        // Panel background
-        ctx.fillStyle = 'rgba(78,205,196,0.04)';
-        roundRect(ctx, x, y, w, panelH, 4);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(78,205,196,0.08)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
-        ctx.stroke();
+        if (this._showBg) {
+            // Panel background
+            ctx.fillStyle = 'rgba(78,205,196,0.04)';
+            roundRect(ctx, x, y, w, panelH, 4);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(78,205,196,0.08)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
+            ctx.stroke();
 
-        // Label
-        ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(78,205,196,0.6)';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.letterSpacing = '1px';
-        ctx.fillText('RESIDUAL SOULS', x + w / 2, y + 4);
-        ctx.letterSpacing = '0px';
+            // Label
+            ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(78,205,196,0.6)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.letterSpacing = '1px';
+            ctx.fillText('RESIDUAL SOULS', x + w / 2, y + 4);
+            ctx.letterSpacing = '0px';
+        }
 
         // Soul icons row
         const iconSize = 14;
@@ -639,23 +678,25 @@ export class ModernRenderer implements OverlayRenderer {
 
         const panelH = 52;
 
-        // Panel background
-        ctx.fillStyle = 'rgba(34,197,94,0.03)';
-        roundRect(ctx, x, y, w, panelH, 4);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(34,197,94,0.06)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
-        ctx.stroke();
+        if (this._showBg) {
+            // Panel background
+            ctx.fillStyle = 'rgba(34,197,94,0.03)';
+            roundRect(ctx, x, y, w, panelH, 4);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(34,197,94,0.06)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
+            ctx.stroke();
 
-        // Label
-        ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(34,197,94,0.55)';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.letterSpacing = '1px';
-        ctx.fillText('NECROSIS', x + w / 2, y + 4);
-        ctx.letterSpacing = '0px';
+            // Label
+            ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(34,197,94,0.55)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.letterSpacing = '1px';
+            ctx.fillText('NECROSIS', x + w / 2, y + 4);
+            ctx.letterSpacing = '0px';
+        }
 
         // Skull icons in pairs with a split gap
         const skullW = 10;
@@ -753,16 +794,18 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background
-        ctx.fillStyle = 'rgba(8, 6, 16, 225)';
-        roundRect(ctx, 0, 0, dims.width, dims.height, 8);
-        ctx.fill();
+        if (this._showBg) {
+            // Background
+            ctx.fillStyle = 'rgba(8, 6, 16, 225)';
+            roundRect(ctx, 0, 0, dims.width, dims.height, 8);
+            ctx.fill();
 
-        // Border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 8);
-        ctx.stroke();
+            // Border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 8);
+            ctx.stroke();
+        }
 
         let y = 10;
         const padX = 12;
@@ -790,18 +833,19 @@ export class ModernRenderer implements OverlayRenderer {
         def: StyleDef,
         x: number, y: number, w: number,
     ): number {
-        // Thin divider between groups
-        ctx.fillStyle = 'rgba(255, 255, 255, 10)';
-        ctx.fillRect(x, y, w, 1);
-        y += 5;
+        if (this._showBg) {
+            // Thin divider between groups
+            ctx.fillStyle = 'rgba(255, 255, 255, 10)';
+            ctx.fillRect(x, y, w, 1);
 
-        // Group label
-        ctx.font = '500 9px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(group.name.toUpperCase(), x + 2, y);
-        y += 13;
+            // Group label
+            ctx.font = '500 9px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(group.name.toUpperCase(), x + 2, y + 5);
+        }
+        y += 18;
 
         switch (group.layout) {
             case 'prominent':
@@ -839,30 +883,36 @@ export class ModernRenderer implements OverlayRenderer {
 
         ctx.globalAlpha = isActive ? 1.0 : 0.4;
 
-        // Background
-        ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.12 : 0.03})`;
-        roundRect(ctx, x, y, w, rowH, 6);
-        ctx.fill();
-
-        // Left accent bar
-        ctx.fillStyle = isActive ? activeAbility.color : 'rgba(255,255,255,20)';
-        ctx.fillRect(x, y + 6, 3, rowH - 12);
-
-        // Large icon (36x36)
         const iconX = x + 10;
         const iconY = y + 4;
         const iconSize = 36;
-        ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.2 : 0.08})`;
-        roundRect(ctx, iconX, iconY, iconSize, iconSize, 5);
-        ctx.fill();
+
+        if (this._showBg) {
+            // Background
+            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.12 : 0.03})`;
+            roundRect(ctx, x, y, w, rowH, 6);
+            ctx.fill();
+
+            // Left accent bar
+            ctx.fillStyle = isActive ? activeAbility.color : 'rgba(255,255,255,20)';
+            ctx.fillRect(x, y + 6, 3, rowH - 12);
+
+            // Icon box frame
+            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.2 : 0.08})`;
+            roundRect(ctx, iconX, iconY, iconSize, iconSize, 5);
+            ctx.fill();
+        }
+
         this.drawIcon(ctx, activeAbility.refImage, iconX, iconY, iconSize, isActive, activeAbility.color);
 
-        // Name
-        ctx.font = '500 13px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(activeAbility.shortName, iconX + iconSize + 10, y + 6);
+        if (this._showBg) {
+            // Name
+            ctx.font = '500 13px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(activeAbility.shortName, iconX + iconSize + 10, y + 6);
+        }
 
         // Timer / cooldown text
         const timeStr = isActive ? formatTimeShort(abilityState!.time) : '\u2014';
@@ -916,32 +966,39 @@ export class ModernRenderer implements OverlayRenderer {
 
             ctx.globalAlpha = isActive ? 1.0 : 0.35;
 
-            // Cell background
-            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.1 : 0.02})`;
-            roundRect(ctx, cx, cy, cellW, cellH, 4);
-            ctx.fill();
-
-            // Left accent
-            ctx.fillStyle = isActive ? ability.color : 'rgba(255,255,255,20)';
-            ctx.fillRect(cx, cy + 4, 2, cellH - 8);
-
             // Icon (20x20)
             const iconSize = 20;
             const iX = cx + 6;
             const iY = cy + 4;
-            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.2 : 0.08})`;
-            roundRect(ctx, iX, iY, iconSize, iconSize, 3);
-            ctx.fill();
+
+            if (this._showBg) {
+                // Cell background
+                ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.1 : 0.02})`;
+                roundRect(ctx, cx, cy, cellW, cellH, 4);
+                ctx.fill();
+
+                // Left accent
+                ctx.fillStyle = isActive ? ability.color : 'rgba(255,255,255,20)';
+                ctx.fillRect(cx, cy + 4, 2, cellH - 8);
+
+                // Icon box frame
+                ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.2 : 0.08})`;
+                roundRect(ctx, iX, iY, iconSize, iconSize, 3);
+                ctx.fill();
+            }
+
             this.drawIcon(ctx, ability.refImage, iX, iY, iconSize, isActive, ability.color);
 
-            // Name (truncated to fit)
-            ctx.font = '10px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            const maxNameW = cellW - iconSize - 40;
-            const name = this.truncateText(ctx, ability.shortName, maxNameW);
-            ctx.fillText(name, iX + iconSize + 5, cy + cellH / 2);
+            if (this._showBg) {
+                // Name (truncated to fit)
+                ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                const maxNameW = cellW - iconSize - 40;
+                const name = this.truncateText(ctx, ability.shortName, maxNameW);
+                ctx.fillText(name, iX + iconSize + 5, cy + cellH / 2);
+            }
 
             // Timer (right-aligned)
             const time = abilityState?.time || 0;
@@ -1009,10 +1066,12 @@ export class ModernRenderer implements OverlayRenderer {
 
         ctx.globalAlpha = isActive ? 1.0 : 0.35;
 
-        // Bar background
-        ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        roundRect(ctx, x, y, w, barH, 4);
-        ctx.fill();
+        if (this._showBg) {
+            // Bar background
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            roundRect(ctx, x, y, w, barH, 4);
+            ctx.fill();
+        }
 
         // Progress fill
         if (isActive && ability.internalDuration) {
@@ -1024,12 +1083,14 @@ export class ModernRenderer implements OverlayRenderer {
             }
         }
 
-        // Name (left)
-        ctx.font = '10px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(ability.shortName, x + 8, y + barH / 2);
+        if (this._showBg) {
+            // Name
+            ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ability.shortName, x + 8, y + barH / 2);
+        }
 
         // Timer (right)
         const time = abilityState?.time || 0;
@@ -1063,25 +1124,29 @@ export class ModernRenderer implements OverlayRenderer {
             const active = cState?.active || false;
             const time = cState?.time || 0;
 
-            // Background
-            ctx.fillStyle = active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.02)';
-            roundRect(ctx, ix, y, itemW, rowH, 4);
-            ctx.fill();
-
-            // Icon (18x18)
             const iconSize = 18;
             const iX = ix + 3;
             const iY = y + 5;
+
+            if (this._showBg) {
+                // Background
+                ctx.fillStyle = active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.02)';
+                roundRect(ctx, ix, y, itemW, rowH, 4);
+                ctx.fill();
+            }
+
             this.drawIcon(ctx, conjure.refImage, iX, iY, iconSize, active, '#22c55e');
 
-            // Name
-            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = active ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.25)';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            const maxNameW = itemW - iconSize - 8;
-            const name = this.truncateText(ctx, conjure.shortName, maxNameW);
-            ctx.fillText(name, iX + iconSize + 3, y + 3);
+            if (this._showBg) {
+                // Name
+                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = active ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.25)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                const maxNameW = itemW - iconSize - 8;
+                const name = this.truncateText(ctx, conjure.shortName, maxNameW);
+                ctx.fillText(name, iX + iconSize + 3, y + 3);
+            }
 
             // Timer
             if (active && time > 0) {
@@ -1114,17 +1179,19 @@ export class ModernRenderer implements OverlayRenderer {
             const stacks = abilityState?.stacks || 0;
             const maxStacks = getEffectiveMaxStacks(ability, state.abilities, { noSoulboundLantern: state.noSoulboundLantern });
 
-            // Group background
-            ctx.fillStyle = 'rgba(255,255,255,0.03)';
-            roundRect(ctx, gx, y, groupW, maxH, 5);
-            ctx.fill();
+            if (this._showBg) {
+                // Group background
+                ctx.fillStyle = 'rgba(255,255,255,0.03)';
+                roundRect(ctx, gx, y, groupW, maxH, 5);
+                ctx.fill();
 
-            // Label
-            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.35)';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText(ability.shortName, gx + groupW / 2, y + 4);
+                // Label
+                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(ability.shortName, gx + groupW / 2, y + 4);
+            }
 
             // Stack bars
             const barW = 5;
@@ -1176,22 +1243,25 @@ export class ModernRenderer implements OverlayRenderer {
 
             ctx.globalAlpha = isActive ? 1.0 : 0.35;
 
-            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.1 : 0.02})`;
-            roundRect(ctx, ix, y, itemW, rowH, 4);
-            ctx.fill();
+            if (this._showBg) {
+                // Cell background
+                ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.1 : 0.02})`;
+                roundRect(ctx, ix, y, itemW, rowH, 4);
+                ctx.fill();
 
-            // Left accent
-            ctx.fillStyle = isActive ? ability.color : 'rgba(255,255,255,20)';
-            ctx.fillRect(ix, y + 4, 2, rowH - 8);
+                // Left accent
+                ctx.fillStyle = isActive ? ability.color : 'rgba(255,255,255,20)';
+                ctx.fillRect(ix, y + 4, 2, rowH - 8);
 
-            // Name
-            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.8)';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            const maxNameW = itemW - 36;
-            const name = this.truncateText(ctx, ability.shortName, maxNameW);
-            ctx.fillText(name, ix + 6, y + rowH / 2);
+                // Name
+                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                const maxNameW = itemW - 36;
+                const name = this.truncateText(ctx, ability.shortName, maxNameW);
+                ctx.fillText(name, ix + 6, y + rowH / 2);
+            }
 
             // Timer
             const time = abilityState?.time || 0;
@@ -1313,8 +1383,10 @@ export class ModernRenderer implements OverlayRenderer {
         const conjureIds = ['skeleton', 'zombie', 'ghost', 'phantom'];
         const conjureAbilities = def.abilities.filter(a => conjureIds.includes(a.id));
         if (conjureAbilities.length > 0) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 10)';
-            ctx.fillRect(x, y, w, 1);
+            if (this._showBg) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 10)';
+                ctx.fillRect(x, y, w, 1);
+            }
             y += 5;
             y = this.drawConjureRow(ctx, conjureAbilities, state, x, y, w);
         }
@@ -1334,26 +1406,33 @@ export class ModernRenderer implements OverlayRenderer {
         const [r, g, b] = hexToRgb(ability.color);
 
         ctx.globalAlpha = isActive ? 1.0 : 0.35;
-        ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.1 : 0.02})`;
-        roundRect(ctx, x, y, w, rowH, 5);
-        ctx.fill();
-
-        ctx.fillStyle = isActive ? ability.color : 'rgba(255,255,255,20)';
-        ctx.fillRect(x, y + 4, 2, rowH - 8);
 
         const iconX = x + 8;
         const iconY = y + 3;
         const iconSize = 24;
-        ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.2 : 0.08})`;
-        roundRect(ctx, iconX, iconY, iconSize, iconSize, 4);
-        ctx.fill();
+
+        if (this._showBg) {
+            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.1 : 0.02})`;
+            roundRect(ctx, x, y, w, rowH, 5);
+            ctx.fill();
+
+            ctx.fillStyle = isActive ? ability.color : 'rgba(255,255,255,20)';
+            ctx.fillRect(x, y + 4, 2, rowH - 8);
+
+            ctx.fillStyle = `rgba(${r},${g},${b},${isActive ? 0.2 : 0.08})`;
+            roundRect(ctx, iconX, iconY, iconSize, iconSize, 4);
+            ctx.fill();
+        }
+
         this.drawIcon(ctx, ability.refImage, iconX, iconY, iconSize, isActive, ability.color);
 
-        ctx.font = '11px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(ability.shortName, iconX + iconSize + 8, y + rowH / 2);
+        if (this._showBg) {
+            ctx.font = '11px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ability.shortName, iconX + iconSize + 8, y + rowH / 2);
+        }
 
         const time = abilityState?.time || 0;
         ctx.font = '500 13px Consolas, "SF Mono", monospace';

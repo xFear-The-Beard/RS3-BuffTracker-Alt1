@@ -13,6 +13,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
  * Progress bars for stack abilities. Familiar RS3 aesthetic.
  */
 export class ClassicRenderer implements OverlayRenderer {
+    private _showBg: boolean = true;
 
     // =====================================================================
     // HTML Rendering
@@ -151,6 +152,7 @@ export class ClassicRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        this._showBg = state.combatGaugeBackgroundVisible;
         const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
         canvas.width = Math.round(dims.width * scale);
@@ -161,17 +163,20 @@ export class ClassicRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background gradient (approximation - canvas can't do CSS gradients easily)
-        ctx.fillStyle = 'rgba(18, 12, 30, 235)'; // 0.92 * 255
-        roundRect(ctx, 0, 0, dims.width, dims.height, 4);
-        ctx.fill();
-
-        // Border
         const [sr, sg, sb] = hexToRgb(def.color);
-        ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.4)`;
-        ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 4);
-        ctx.stroke();
+
+        if (this._showBg) {
+            // Background gradient (approximation - canvas can't do CSS gradients easily)
+            ctx.fillStyle = 'rgba(18, 12, 30, 235)'; // 0.92 * 255
+            roundRect(ctx, 0, 0, dims.width, dims.height, 4);
+            ctx.fill();
+
+            // Border
+            ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.4)`;
+            ctx.lineWidth = 1;
+            roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 4);
+            ctx.stroke();
+        }
 
         const padX = 8;
         let y = 6;
@@ -279,27 +284,31 @@ export class ClassicRenderer implements OverlayRenderer {
             for (const conjure of conjureAbilities) {
                 const active = state.abilities[conjure.id]?.active || false;
 
-                // Pill background
-                ctx.fillStyle = active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)';
-                roundRect(ctx, cx, y, pillW, pillH, 3);
-                ctx.fill();
+                if (this._showBg) {
+                    // Pill background
+                    ctx.fillStyle = active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)';
+                    roundRect(ctx, cx, y, pillW, pillH, 3);
+                    ctx.fill();
 
-                // Pill border
-                ctx.strokeStyle = active ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)';
-                ctx.lineWidth = 1;
-                roundRect(ctx, cx + 0.5, y + 0.5, pillW - 1, pillH - 1, 3);
-                ctx.stroke();
+                    // Pill border
+                    ctx.strokeStyle = active ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)';
+                    ctx.lineWidth = 1;
+                    roundRect(ctx, cx + 0.5, y + 0.5, pillW - 1, pillH - 1, 3);
+                    ctx.stroke();
+                }
 
                 // Conjure icon or fallback dot
                 const iconSize = 14;
                 this.drawIcon(ctx, conjure.refImage, cx + 3, y + (pillH - iconSize) / 2, iconSize, active, '#22c55e');
 
-                // Name
-                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-                ctx.fillStyle = active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(conjure.shortName, cx + 20, y + pillH / 2);
+                if (this._showBg) {
+                    // Name
+                    ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                    ctx.fillStyle = active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(conjure.shortName, cx + 20, y + pillH / 2);
+                }
 
                 cx += pillW + pillGap;
             }
@@ -321,43 +330,48 @@ export class ClassicRenderer implements OverlayRenderer {
 
         ctx.globalAlpha = active ? 1.0 : 0.4;
 
-        // Icon background
-        ctx.fillStyle = 'rgba(30, 20, 50, 204)'; // 0.8 * 255
-        roundRect(ctx, x, y, size, size, 2);
-        ctx.fill();
+        if (this._showBg) {
+            // Icon background
+            ctx.fillStyle = 'rgba(30, 20, 50, 204)'; // 0.8 * 255
+            roundRect(ctx, x, y, size, size, 2);
+            ctx.fill();
 
-        // Icon border
-        ctx.strokeStyle = active
-            ? `rgba(${r},${g},${b},0.6)`
-            : 'rgba(255,255,255,0.08)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, x + 0.5, y + 0.5, size - 1, size - 1, 2);
-        ctx.stroke();
-
-        // Icon image or fallback dot
-        this.drawIcon(ctx, ability.refImage, x, y, size, active, ability.color);
-
-        // Timer overlay at bottom
-        if (active) {
-            const overlayH = 11;
-            ctx.fillStyle = 'rgba(0, 0, 0, 179)'; // 0.7 * 255
-            ctx.fillRect(x, y + size - overlayH, size, overlayH);
-
-            const text = formatTimeShort(state?.time || 0);
-
-            ctx.font = '500 9px Consolas, "SF Mono", monospace';
-            ctx.fillStyle = '#ffffff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, x + size / 2, y + size - overlayH / 2);
+            // Icon border
+            ctx.strokeStyle = active
+                ? `rgba(${r},${g},${b},0.6)`
+                : 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, x + 0.5, y + 0.5, size - 1, size - 1, 2);
+            ctx.stroke();
         }
 
-        // Label below
-        ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(ability.shortName, x + size / 2, y + size + 2);
+        this.drawIcon(ctx, ability.refImage, x, y, size, active, ability.color);
+
+        // Timer text, outlined in minimal mode for contrast against the game.
+        if (active) {
+            const text = formatTimeShort(state?.time || 0);
+            ctx.font = '500 9px Consolas, "SF Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const textX = x + size / 2;
+            const textY = y + size - 6;
+            if (!this._showBg) {
+                ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+                ctx.lineWidth = 2;
+                ctx.strokeText(text, textX, textY);
+            }
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, textX, textY);
+        }
+
+        if (this._showBg) {
+            // Label below
+            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName, x + size / 2, y + size + 2);
+        }
 
         ctx.globalAlpha = 1.0;
     }
@@ -372,26 +386,31 @@ export class ClassicRenderer implements OverlayRenderer {
         const stacks = state?.stacks || 0;
         const max = ability.maxStacks || 1;
         const pct = Math.min(stacks / max, 1);
-        const [r, g, b] = hexToRgb(ability.color);
 
-        // Label + count header
-        ctx.font = '10px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(ability.shortName, x, y);
+        if (this._showBg) {
+            // Label
+            ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName, x, y);
+        }
 
+        // Count
         ctx.font = '500 10px Consolas, "SF Mono", monospace';
         ctx.fillStyle = stacks > 0 ? ability.color : 'rgba(255,255,255,0.3)';
         ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
         ctx.fillText(`${stacks} / ${max}`, x + w, y);
 
         // Progress bar track
         const barY = y + 14;
         const barH = 6;
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        roundRect(ctx, x, barY, w, barH, 3);
-        ctx.fill();
+        if (this._showBg) {
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            roundRect(ctx, x, barY, w, barH, 3);
+            ctx.fill();
+        }
 
         // Progress bar fill
         if (pct > 0) {
@@ -413,30 +432,34 @@ export class ClassicRenderer implements OverlayRenderer {
         const time = state?.time || 0;
         const maxTime = ability.internalDuration || 20.5;
         const pct = active ? Math.min(time / maxTime, 1) : 0;
-        const [r, g, b] = hexToRgb(ability.color);
 
-        // Label + timer header
-        ctx.font = '10px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-
-        // Icon + label
         const iconSize = 14;
         this.drawIcon(ctx, ability.refImage, x, y, iconSize, active, ability.color);
-        ctx.fillText(ability.shortName, x + iconSize + 4, y);
 
+        if (this._showBg) {
+            // Label
+            ctx.font = '10px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName, x + iconSize + 4, y);
+        }
+
+        // Timer value
         ctx.font = '500 10px Consolas, "SF Mono", monospace';
         ctx.fillStyle = active ? ability.color : 'rgba(255,255,255,0.3)';
         ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
         ctx.fillText(active ? formatTimeShort(time) : '\u2014', x + w, y);
 
         // Progress bar track
         const barY = y + 14;
         const barH = 6;
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        roundRect(ctx, x, barY, w, barH, 3);
-        ctx.fill();
+        if (this._showBg) {
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            roundRect(ctx, x, barY, w, barH, 3);
+            ctx.fill();
+        }
 
         // Progress bar fill
         if (pct > 0) {

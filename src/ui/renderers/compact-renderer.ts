@@ -13,6 +13,7 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
  * Minimal vertical footprint - designed for users who want minimal screen obstruction.
  */
 export class CompactRenderer implements OverlayRenderer {
+    private _showBg: boolean = true;
 
     // =====================================================================
     // HTML Rendering
@@ -100,6 +101,7 @@ export class CompactRenderer implements OverlayRenderer {
         const def = styleDef || COMBAT_STYLES.find(s => s.id === state.combatStyle);
         if (!def) return;
 
+        this._showBg = state.combatGaugeBackgroundVisible;
         const scale = state.overlayScale || 1.0;
         const dims = this.getMinDimensions(state, def);
         canvas.width = Math.round(dims.width * scale);
@@ -110,16 +112,18 @@ export class CompactRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background
-        ctx.fillStyle = 'rgba(10, 8, 20, 209)'; // 0.82 * 255
-        roundRect(ctx, 0, 0, dims.width, dims.height, 6);
-        ctx.fill();
+        if (this._showBg) {
+            // Background
+            ctx.fillStyle = 'rgba(10, 8, 20, 209)'; // 0.82 * 255
+            roundRect(ctx, 0, 0, dims.width, dims.height, 6);
+            ctx.fill();
 
-        // Border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
-        ctx.stroke();
+            // Border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
+            ctx.stroke();
+        }
 
         const padX = 12;
         let y = 8;
@@ -165,15 +169,17 @@ export class CompactRenderer implements OverlayRenderer {
                 const isActive = bloatState?.active && (bloatState.time > 0 || bloat.type === 'enemy-debuff');
                 const barH = 20;
 
-                // Bar background
-                ctx.fillStyle = 'rgba(120,200,80,0.03)';
-                roundRect(ctx, padX, y, dims.width - padX * 2, barH, 4);
-                ctx.fill();
+                if (this._showBg) {
+                    // Bar background
+                    ctx.fillStyle = 'rgba(120,200,80,0.03)';
+                    roundRect(ctx, padX, y, dims.width - padX * 2, barH, 4);
+                    ctx.fill();
 
-                ctx.strokeStyle = 'rgba(140,80,200,0.12)';
-                ctx.lineWidth = 1;
-                roundRect(ctx, padX + 0.5, y + 0.5, dims.width - padX * 2 - 1, barH - 1, 4);
-                ctx.stroke();
+                    ctx.strokeStyle = 'rgba(140,80,200,0.12)';
+                    ctx.lineWidth = 1;
+                    roundRect(ctx, padX + 0.5, y + 0.5, dims.width - padX * 2 - 1, barH - 1, 4);
+                    ctx.stroke();
+                }
 
                 if (isActive && bloat.internalDuration) {
                     const progress = Math.min(1, bloatState!.time / bloat.internalDuration);
@@ -192,17 +198,20 @@ export class CompactRenderer implements OverlayRenderer {
                 const bIconSize = 14;
                 this.drawIcon(ctx, bloat.refImage, padX + 4, y + (barH - bIconSize) / 2, bIconSize, isActive || false, '#8c50c8');
 
-                // Label
-                ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-                ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('Bloat', padX + 4 + bIconSize + 4, y + barH / 2);
+                if (this._showBg) {
+                    // Label
+                    ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Bloat', padX + 4 + bIconSize + 4, y + barH / 2);
+                }
 
                 // Timer
                 ctx.font = '500 10px Consolas, "SF Mono", monospace';
                 ctx.fillStyle = isActive ? '#8c50c8' : 'rgba(255,255,255,0.15)';
                 ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
                 ctx.fillText(isActive ? formatTimeShort(bloatState!.time) : '\u2014', dims.width - padX - 4, y + barH / 2);
 
                 y += barH + 4;
@@ -236,39 +245,43 @@ export class CompactRenderer implements OverlayRenderer {
 
         ctx.globalAlpha = active ? 1.0 : 0.35;
 
-        // Pill background
-        ctx.fillStyle = `rgba(${r},${g},${b},${active ? 0.08 : 0.03})`;
-        roundRect(ctx, x, y, w, h, 4);
-        ctx.fill();
-
-        // Icon square
         const iconSize = 22;
         const iconX = x + 2;
         const iconY = y + 2;
 
-        ctx.fillStyle = active
-            ? `rgba(${r},${g},${b},0.25)`
-            : 'rgba(255,255,255,0.05)';
-        roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
-        ctx.fill();
+        if (this._showBg) {
+            // Pill background
+            ctx.fillStyle = `rgba(${r},${g},${b},${active ? 0.08 : 0.03})`;
+            roundRect(ctx, x, y, w, h, 4);
+            ctx.fill();
 
-        // Icon border
-        ctx.strokeStyle = active
-            ? `rgba(${r},${g},${b},0.5)`
-            : 'rgba(255,255,255,0.08)';
-        ctx.lineWidth = 1;
-        roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
-        ctx.stroke();
+            // Icon square
+            ctx.fillStyle = active
+                ? `rgba(${r},${g},${b},0.25)`
+                : 'rgba(255,255,255,0.05)';
+            roundRect(ctx, iconX, iconY, iconSize, iconSize, 3);
+            ctx.fill();
+
+            // Icon border
+            ctx.strokeStyle = active
+                ? `rgba(${r},${g},${b},0.5)`
+                : 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
+            ctx.stroke();
+        }
 
         // Icon image or fallback dot
         this.drawIcon(ctx, ability.refImage, iconX, iconY, iconSize, active, ability.color);
 
-        // Name
-        ctx.font = '9px "Segoe UI", system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(ability.shortName, x + iconSize + 6, y + 3);
+        if (this._showBg) {
+            // Name
+            ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(ability.shortName, x + iconSize + 6, y + 3);
+        }
 
         // Value
         let valueStr: string;
@@ -282,6 +295,7 @@ export class CompactRenderer implements OverlayRenderer {
 
         ctx.font = '500 10px Consolas, "SF Mono", monospace';
         ctx.fillStyle = active ? ability.color : 'rgba(255,255,255,0.25)';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
         ctx.fillText(valueStr, x + iconSize + 6, y + h - 2);
 
