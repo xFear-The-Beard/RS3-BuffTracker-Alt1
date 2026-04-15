@@ -151,6 +151,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
  * These are plain .png files in dist/refs/, NOT processed by imagedata-loader.
  */
 const DISPLAY_IMAGE_PATHS: Record<string, string> = {
+    'death-skulls': 'refs/combat/necromancy/death-skulls.png',
     'living-death': 'refs/combat/necromancy/living-death.png',
     'darkness': 'refs/combat/necromancy/darkness.png',
     'threads-of-fate': 'refs/combat/necromancy/threads-of-fate.png',
