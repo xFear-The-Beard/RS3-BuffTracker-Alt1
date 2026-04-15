@@ -17,6 +17,11 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
  * - Melee: diamond-rotated (45deg) frames, channel progress bars
  */
 export class ThemedFramesRenderer implements OverlayRenderer {
+    // Opacity pair for the current render pass. See CompactRenderer for the
+    // convention: bg slider fades decorative elements (frames, borders, labels),
+    // fg slider fades live data (icons, bar fills, timer text, stack indicators).
+    private _bgOpacity: number = 1.0;
+    private _fgOpacity: number = 1.0;
 
     // =====================================================================
     // HTML Rendering - uses canvas in container for consistency
@@ -52,10 +57,16 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
+        // Read opacity pair for this render pass from the per-combat-style map
+        const op = state.styleOpacity?.[state.combatStyle] ?? { background: 1.0, foreground: 1.0 };
+        this._bgOpacity = op.background;
+        this._fgOpacity = op.foreground;
+
         const style = def.id as CombatStyle;
         const [sr, sg, sb] = hexToRgb(def.color);
 
-        // Background with style-specific tint
+        // Background with style-specific tint (bg)
+        ctx.globalAlpha = this._bgOpacity;
         const bgColors: Record<string, string> = {
             necromancy: 'rgba(8, 4, 18, 235)',
             magic: 'rgba(6, 4, 16, 235)',
@@ -66,7 +77,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         roundRect(ctx, 0, 0, dims.width, dims.height, 10);
         ctx.fill();
 
-        // Border
+        // Border (bg)
         ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.25)`;
         ctx.lineWidth = 1;
         roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 10);
@@ -156,7 +167,8 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const conjureAbilities = def.abilities.filter(a => conjureIds.includes(a.id));
         if (conjureAbilities.length > 0) {
             y += 2;
-            // Divider
+            // Divider (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.fillStyle = `rgba(${sr},${sg},${sb},0.12)`;
             ctx.fillRect(padX, y, dims.width - padX * 2, 1);
             y += 8;
@@ -170,6 +182,8 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             );
             if (channelAbilities.length > 0) {
                 y += 2;
+                // Divider (bg)
+                ctx.globalAlpha = this._bgOpacity;
                 ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
                 ctx.fillRect(padX, y, dims.width - padX * 2, 1);
                 y += 8;
@@ -177,6 +191,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             }
         }
 
+        ctx.globalAlpha = 1.0;
         ctx.restore();
     }
 
@@ -191,10 +206,10 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         size: number,
         style: CombatStyle,
     ): void {
-        const active = abilityState?.active || false;
-
-        ctx.globalAlpha = active ? 1.0 : 0.25;
-
+        // The frame helpers (drawRoundedIconFrame / drawDiamondIconFrame)
+        // apply bg/fg opacity internally per-draw - we don't set a single
+        // outer globalAlpha here because frame draws mix bg (frame fill/border,
+        // timer overlay bg, label text) and fg (icon, timer value text).
         switch (style) {
             case 'necromancy':
                 this.drawRoundedIconFrame(ctx, x, y, size, ability, abilityState, 8);
@@ -211,8 +226,6 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             default:
                 this.drawRoundedIconFrame(ctx, x, y, size, ability, abilityState, 8);
         }
-
-        ctx.globalAlpha = 1.0;
     }
 
     private drawRoundedIconFrame(
@@ -224,15 +237,16 @@ export class ThemedFramesRenderer implements OverlayRenderer {
     ): void {
         const active = abilityState?.active || false;
         const [r, g, b] = hexToRgb(ability.color);
+        const activeMul = active ? 1.0 : 0.25;
 
-        // Frame background
+        // Frame decoration (bg): background + border
+        ctx.globalAlpha = activeMul * this._bgOpacity;
         ctx.fillStyle = active
             ? `rgba(${r},${g},${b},0.1)`
             : 'rgba(255,255,255,0.03)';
         roundRect(ctx, x, y, size, size, borderRadius);
         ctx.fill();
 
-        // Frame border
         ctx.strokeStyle = active
             ? `rgba(${r},${g},${b},0.5)`
             : 'rgba(255,255,255,0.1)';
@@ -240,14 +254,15 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         roundRect(ctx, x + 0.5, y + 0.5, size - 1, size - 1, borderRadius);
         ctx.stroke();
 
-        // Icon image or fallback dot
+        // Icon image (fg - drawIcon manages its own alpha)
         this.drawIcon(ctx, ability.refImage, x + 2, y + 2, size - 4, active, ability.color);
 
-        // Timer overlay at bottom
+        // Timer overlay at bottom: dark band (bg) + live text (fg)
         if (active) {
             const overlayH = 14;
             const overlayY = y + size - overlayH;
 
+            ctx.globalAlpha = activeMul * this._bgOpacity;
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.beginPath();
             ctx.moveTo(x, overlayY);
@@ -261,6 +276,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
 
             const text = formatTimeShort(abilityState?.time || 0);
 
+            ctx.globalAlpha = activeMul * this._fgOpacity;
             ctx.font = '500 11px Consolas, "SF Mono", monospace';
             ctx.fillStyle = ability.color;
             ctx.textAlign = 'center';
@@ -268,12 +284,15 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             ctx.fillText(text, x + size / 2, overlayY + overlayH / 2);
         }
 
-        // Label below
+        // Label below (bg)
+        ctx.globalAlpha = activeMul * this._bgOpacity;
         ctx.font = '9px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(ability.shortName, x + size / 2, y + size + 4);
+
+        ctx.globalAlpha = 1.0;
     }
 
     private drawDiamondIconFrame(
@@ -284,11 +303,13 @@ export class ThemedFramesRenderer implements OverlayRenderer {
     ): void {
         const active = abilityState?.active || false;
         const [r, g, b] = hexToRgb(ability.color);
+        const activeMul = active ? 1.0 : 0.25;
         const cx = x + size / 2;
         const cy = y + size / 2;
         const half = size / 2 - 2;
 
-        // Diamond shape
+        // Diamond decoration (bg): fill + stroke
+        ctx.globalAlpha = activeMul * this._bgOpacity;
         ctx.beginPath();
         ctx.moveTo(cx, cy - half);
         ctx.lineTo(cx + half, cy);
@@ -307,14 +328,15 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Icon image or fallback dot
+        // Icon image (fg - drawIcon manages its own alpha)
         const iconDrawSize = half;
         this.drawIcon(ctx, ability.refImage, cx - iconDrawSize / 2, cy - iconDrawSize / 2 - 4, iconDrawSize, active, ability.color);
 
-        // Timer inside diamond
+        // Timer inside diamond (fg - live data)
         if (active) {
             const text = formatTimeShort(abilityState?.time || 0);
 
+            ctx.globalAlpha = activeMul * this._fgOpacity;
             ctx.font = '500 10px Consolas, "SF Mono", monospace';
             ctx.fillStyle = ability.color;
             ctx.textAlign = 'center';
@@ -322,12 +344,15 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             ctx.fillText(text, cx, cy + 8);
         }
 
-        // Label below diamond
+        // Label below diamond (bg)
+        ctx.globalAlpha = activeMul * this._bgOpacity;
         ctx.font = '9px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(ability.shortName, cx, y + size + 4);
+
+        ctx.globalAlpha = 1.0;
     }
 
     /**
@@ -352,12 +377,16 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             const maxStacks = ability.maxStacks || 1;
             const [r, g, b] = hexToRgb(ability.color);
 
-            // Title
+            // Title label (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.font = '9px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = `rgba(${r},${g},${b},0.6)`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillText(ability.shortName.toUpperCase(), gx + groupW / 2, y);
+
+            // Stack indicators (fg - live data)
+            ctx.globalAlpha = this._fgOpacity;
 
             if (style === 'necromancy' && ability.id === 'souls') {
                 // Soul orbs
@@ -427,7 +456,8 @@ export class ThemedFramesRenderer implements OverlayRenderer {
                 }
             }
 
-            // Count
+            // Count text (fg - live data)
+            ctx.globalAlpha = this._fgOpacity;
             ctx.font = '500 13px Consolas, "SF Mono", monospace';
             ctx.fillStyle = stacks > 0 ? ability.color : `rgba(${r},${g},${b},0.2)`;
             ctx.textAlign = 'center';
@@ -437,6 +467,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             gx += groupW + gap;
         }
 
+        ctx.globalAlpha = 1.0;
         return y + 56;
     }
 
@@ -461,7 +492,8 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             const active = cState?.active || false;
             const cx = ix + itemW / 2;
 
-            // Conjure icon frame
+            // Conjure icon frame decoration (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.fillStyle = active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)';
             roundRect(ctx, cx - iconW / 2, y, iconW, iconH, 4);
             ctx.fill();
@@ -470,11 +502,12 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             roundRect(ctx, cx - iconW / 2 + 0.5, y + 0.5, iconW - 1, iconH - 1, 4);
             ctx.stroke();
 
-            // Conjure icon or fallback shape
+            // Conjure icon (fg - drawIcon manages its own alpha)
             const conjIconSize = Math.min(iconW - 4, iconH - 4);
             this.drawIcon(ctx, conjure.refImage, cx - conjIconSize / 2, y + (iconH - conjIconSize) / 2, conjIconSize, active, '#22c55e');
 
-            // Label
+            // Label text (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.font = '8px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = active ? '#86efac' : 'rgba(255,255,255,0.3)';
             ctx.fillText(conjure.shortName, cx, y + iconH + 8);
@@ -482,6 +515,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             ix += itemW + gap;
         }
 
+        ctx.globalAlpha = 1.0;
         return y + iconH + 16;
     }
 
@@ -506,46 +540,52 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         const barH = 36;
         const barW = totalW;
 
-        // Bar container
+        // Bar container decoration (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
         roundRect(ctx, x, y, barW, barH, 5);
         ctx.fill();
 
-        // Title
+        // Title text (bg)
         ctx.font = '9px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(ability.shortName.toUpperCase(), x + barW / 2, y + 4);
 
-        // Icon
+        // Icon (fg - drawIcon manages its own alpha)
         const iconSize = 14;
         this.drawIcon(ctx, ability.refImage, x + 6, y + 4, iconSize, active, ability.color);
 
-        // Progress bar
+        // Progress bar track (bg)
         const pBarX = x + 6;
         const pBarY = y + 17;
         const pBarW = barW - 12;
         const pBarH = 4;
 
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(255,255,255,0.06)';
         roundRect(ctx, pBarX, pBarY, pBarW, pBarH, 2);
         ctx.fill();
 
+        // Progress bar fill (fg - live countdown data)
         if (active && pct > 0) {
+            ctx.globalAlpha = this._fgOpacity;
             const fillW = Math.max(pct * pBarW, pBarH);
             ctx.fillStyle = ability.color;
             roundRect(ctx, pBarX, pBarY, fillW, pBarH, 2);
             ctx.fill();
         }
 
-        // Status text
+        // Status text (fg - live countdown)
+        ctx.globalAlpha = this._fgOpacity;
         ctx.font = '500 11px Consolas, "SF Mono", monospace';
         ctx.fillStyle = active ? ability.color : 'rgba(255,255,255,0.2)';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(active ? formatTimeShort(time) : '\u2014', x + barW / 2, y + 23);
 
+        ctx.globalAlpha = 1.0;
         return y + barH + 4;
     }
 
@@ -570,19 +610,20 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             const time = abilityState?.time || 0;
             const [r, g, b] = hexToRgb(ability.color);
 
-            // Bar container
+            // Bar container decoration (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
             roundRect(ctx, bx, y, barW, barTotalH, 5);
             ctx.fill();
 
-            // Title
+            // Title text (bg)
             ctx.font = '9px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillText(ability.shortName.toUpperCase(), bx + barW / 2, y + 4);
 
-            // Progress bar
+            // Progress bar track (bg)
             const pBarX = bx + 6;
             const pBarY = y + 17;
             const pBarW = barW - 12;
@@ -592,7 +633,9 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             roundRect(ctx, pBarX, pBarY, pBarW, pBarH, 2);
             ctx.fill();
 
+            // Progress bar fill (fg - live channel data)
             if (active && time > 0) {
+                ctx.globalAlpha = this._fgOpacity;
                 const pct = Math.min(time / 10, 1);
                 const fillW = Math.max(pct * pBarW, pBarH);
                 ctx.fillStyle = ability.color;
@@ -600,7 +643,8 @@ export class ThemedFramesRenderer implements OverlayRenderer {
                 ctx.fill();
             }
 
-            // Status text
+            // Status text (fg - live data)
+            ctx.globalAlpha = this._fgOpacity;
             ctx.font = '500 11px Consolas, "SF Mono", monospace';
             ctx.fillStyle = active ? ability.color : 'rgba(255,255,255,0.2)';
             ctx.textAlign = 'center';
@@ -610,6 +654,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
             bx += barW + gap;
         }
 
+        ctx.globalAlpha = 1.0;
         return y + barTotalH + 4;
     }
 
@@ -617,7 +662,11 @@ export class ThemedFramesRenderer implements OverlayRenderer {
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
+    /**
+     * Draw an ability/conjure icon. Always foreground content; multiplies the
+     * per-style foreground slider into the existing active/inactive alpha via
+     * save/restore. Outer context alpha is preserved on return.
+     */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,
@@ -626,13 +675,15 @@ export class ThemedFramesRenderer implements OverlayRenderer {
         isActive: boolean,
         color: string,
     ): void {
+        const fgAlpha = (isActive ? 1.0 : 0.25) * this._fgOpacity;
+
         if (refImageKey) {
             const displayImages = getDisplayImages();
             const displayImg = displayImages[refImageKey];
             if (displayImg) {
                 try {
                     ctx.save();
-                    if (!isActive) ctx.globalAlpha = 0.25;
+                    ctx.globalAlpha = fgAlpha;
                     ctx.drawImage(displayImg, x, y, size, size);
                     ctx.restore();
                     return;
@@ -650,7 +701,7 @@ export class ThemedFramesRenderer implements OverlayRenderer {
                     if (tmpCtx) {
                         tmpCtx.putImageData(refImg, 0, 0);
                         ctx.save();
-                        if (!isActive) ctx.globalAlpha = 0.25;
+                        ctx.globalAlpha = fgAlpha;
                         ctx.drawImage(tmpCanvas, x, y, size, size);
                         ctx.restore();
                         return;
@@ -658,11 +709,14 @@ export class ThemedFramesRenderer implements OverlayRenderer {
                 } catch (e) { /* fallback */ }
             }
         }
-        // Fallback: colored dot
+        // Fallback: colored dot (still foreground)
+        ctx.save();
+        ctx.globalAlpha = fgAlpha;
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, Math.min(size / 4, 5), 0, Math.PI * 2);
         ctx.fillStyle = isActive ? color : 'rgba(255,255,255,0.15)';
         ctx.fill();
+        ctx.restore();
     }
 
     // =====================================================================

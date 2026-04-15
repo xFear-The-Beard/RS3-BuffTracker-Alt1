@@ -13,6 +13,12 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
  * Minimal vertical footprint - designed for users who want minimal screen obstruction.
  */
 export class CompactRenderer implements OverlayRenderer {
+    // Opacity pair for the current render pass, read from state at the top of
+    // renderToCanvas. Foreground slider applies to live-data elements (icons,
+    // bar fills, live text); background slider applies to static decoration
+    // (panel rects, borders, labels). Clamped 0.05-1.0 via the store setters.
+    private _bgOpacity: number = 1.0;
+    private _fgOpacity: number = 1.0;
 
     // =====================================================================
     // HTML Rendering
@@ -110,12 +116,19 @@ export class CompactRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background
+        // Read opacity pair for this render pass. combat-gauge uses the
+        // per-combat-style opacity map; see store.ts.
+        const op = state.styleOpacity?.[state.combatStyle] ?? { background: 1.0, foreground: 1.0 };
+        this._bgOpacity = op.background;
+        this._fgOpacity = op.foreground;
+
+        // Background fill (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(10, 8, 20, 209)'; // 0.82 * 255
         roundRect(ctx, 0, 0, dims.width, dims.height, 6);
         ctx.fill();
 
-        // Border
+        // Border (bg)
         ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
         ctx.lineWidth = 1;
         roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
@@ -165,7 +178,8 @@ export class CompactRenderer implements OverlayRenderer {
                 const isActive = bloatState?.active && (bloatState.time > 0 || bloat.type === 'enemy-debuff');
                 const barH = 20;
 
-                // Bar background
+                // Bar track background (bg)
+                ctx.globalAlpha = this._bgOpacity;
                 ctx.fillStyle = 'rgba(120,200,80,0.03)';
                 roundRect(ctx, padX, y, dims.width - padX * 2, barH, 4);
                 ctx.fill();
@@ -175,10 +189,12 @@ export class CompactRenderer implements OverlayRenderer {
                 roundRect(ctx, padX + 0.5, y + 0.5, dims.width - padX * 2 - 1, barH - 1, 4);
                 ctx.stroke();
 
+                // Bar progress fill (fg - live countdown data)
                 if (isActive && bloat.internalDuration) {
                     const progress = Math.min(1, bloatState!.time / bloat.internalDuration);
                     if (progress > 0) {
                         ctx.save();
+                        ctx.globalAlpha = this._fgOpacity;
                         roundRect(ctx, padX, y, dims.width - padX * 2, barH, 4);
                         ctx.clip();
                         const fillW = Math.max(8, (dims.width - padX * 2) * progress);
@@ -188,18 +204,20 @@ export class CompactRenderer implements OverlayRenderer {
                     }
                 }
 
-                // Icon
+                // Icon (fg - drawIcon handles its own alpha multiplication with _fgOpacity)
                 const bIconSize = 14;
                 this.drawIcon(ctx, bloat.refImage, padX + 4, y + (barH - bIconSize) / 2, bIconSize, isActive || false, '#8c50c8');
 
-                // Label
+                // "Bloat" label text (bg)
+                ctx.globalAlpha = this._bgOpacity;
                 ctx.font = '9px "Segoe UI", system-ui, sans-serif';
                 ctx.fillStyle = 'rgba(255,255,255,0.6)';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('Bloat', padX + 4 + bIconSize + 4, y + barH / 2);
 
-                // Timer
+                // Timer value text (fg - live countdown)
+                ctx.globalAlpha = this._fgOpacity;
                 ctx.font = '500 10px Consolas, "SF Mono", monospace';
                 ctx.fillStyle = isActive ? '#8c50c8' : 'rgba(255,255,255,0.15)';
                 ctx.textAlign = 'right';
@@ -233,8 +251,10 @@ export class CompactRenderer implements OverlayRenderer {
     ): void {
         const active = state?.active || false;
         const [r, g, b] = hexToRgb(ability.color);
+        const activeMul = active ? 1.0 : 0.35;
 
-        ctx.globalAlpha = active ? 1.0 : 0.35;
+        // Pill decoration (bg): outer fill, icon square fill, icon border, name label
+        ctx.globalAlpha = activeMul * this._bgOpacity;
 
         // Pill background
         ctx.fillStyle = `rgba(${r},${g},${b},${active ? 0.08 : 0.03})`;
@@ -260,17 +280,22 @@ export class CompactRenderer implements OverlayRenderer {
         roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
         ctx.stroke();
 
-        // Icon image or fallback dot
+        // Icon image or fallback dot (fg - drawIcon uses save/restore so the
+        // outer pill bg alpha is preserved on return)
         this.drawIcon(ctx, ability.refImage, iconX, iconY, iconSize, active, ability.color);
 
-        // Name
+        // Re-assert bg alpha for the name label (drawIcon's save/restore
+        // will have returned us to this._bgOpacity * activeMul, but do it
+        // explicitly for clarity)
+        ctx.globalAlpha = activeMul * this._bgOpacity;
         ctx.font = '9px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(ability.shortName, x + iconSize + 6, y + 3);
 
-        // Value
+        // Value text (fg - live stack count or timer value)
+        ctx.globalAlpha = activeMul * this._fgOpacity;
         let valueStr: string;
         if (isStackingDisplay(ability.type)) {
             valueStr = `\u00D7${state?.stacks || 0}`;
@@ -292,7 +317,12 @@ export class CompactRenderer implements OverlayRenderer {
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
+    /**
+     * Draw an ability/conjure icon - uses display image first, falls back to
+     * ref image, then colored dot. Always treats the icon as foreground content,
+     * multiplying the per-style foreground slider into the existing active/inactive
+     * alpha via save/restore. The outer context's alpha is preserved on return.
+     */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,
@@ -301,13 +331,15 @@ export class CompactRenderer implements OverlayRenderer {
         isActive: boolean,
         color: string,
     ): void {
+        const fgAlpha = (isActive ? 1.0 : 0.25) * this._fgOpacity;
+
         if (refImageKey) {
             const displayImages = getDisplayImages();
             const displayImg = displayImages[refImageKey];
             if (displayImg) {
                 try {
                     ctx.save();
-                    if (!isActive) ctx.globalAlpha = 0.25;
+                    ctx.globalAlpha = fgAlpha;
                     ctx.drawImage(displayImg, x, y, size, size);
                     ctx.restore();
                     return;
@@ -325,7 +357,7 @@ export class CompactRenderer implements OverlayRenderer {
                     if (tmpCtx) {
                         tmpCtx.putImageData(refImg, 0, 0);
                         ctx.save();
-                        if (!isActive) ctx.globalAlpha = 0.25;
+                        ctx.globalAlpha = fgAlpha;
                         ctx.drawImage(tmpCanvas, x, y, size, size);
                         ctx.restore();
                         return;
@@ -333,11 +365,14 @@ export class CompactRenderer implements OverlayRenderer {
                 } catch (e) { /* fallback */ }
             }
         }
-        // Fallback: colored dot
+        // Fallback: colored dot (still foreground, so fgAlpha applies)
+        ctx.save();
+        ctx.globalAlpha = fgAlpha;
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, Math.min(size / 4, 5), 0, Math.PI * 2);
         ctx.fillStyle = isActive ? color : 'rgba(255,255,255,0.15)';
         ctx.fill();
+        ctx.restore();
     }
 
     // =====================================================================

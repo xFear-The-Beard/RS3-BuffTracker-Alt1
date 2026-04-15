@@ -20,6 +20,13 @@ interface BuffEntry {
  * Shows tracked buffs with their status: active (green), expired (red), or hidden.
  */
 export class CombatBuffsRenderer implements OverlayRenderer {
+    // Opacity pair for the current render pass. Combat buffs panel uses its
+    // own dedicated opacity setting (not per-combat-style) since the panel
+    // content is style-agnostic. bg slider fades decoration (outer rounded
+    // rect, row backgrounds, border accents, header label). fg slider fades
+    // live data (per-buff name + timer/EXPIRED text).
+    private _bgOpacity: number = 1.0;
+    private _fgOpacity: number = 1.0;
 
     /**
      * Collect renderable buff entries based on tracking mode and state.
@@ -115,12 +122,19 @@ export class CombatBuffsRenderer implements OverlayRenderer {
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Background
+        // Read opacity pair for this render pass. Combat buffs uses its own
+        // pair, not the per-combat-style map.
+        const op = state.combatBuffsOpacity ?? { background: 1.0, foreground: 1.0 };
+        this._bgOpacity = op.background;
+        this._fgOpacity = op.foreground;
+
+        // Background (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(8, 6, 16, 225)';
         roundRect(ctx, 0, 0, canvas.width, canvas.height, 8);
         ctx.fill();
 
-        // Border
+        // Border (bg)
         ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
         ctx.lineWidth = 1;
         roundRect(ctx, 0.5, 0.5, canvas.width - 1, canvas.height - 1, 8);
@@ -129,7 +143,7 @@ export class CombatBuffsRenderer implements OverlayRenderer {
         const padX = 14;
         let y = 10;
 
-        // Header
+        // "Combat Buffs" header label (bg)
         ctx.font = '500 12px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = '#fcd34d';
         ctx.textAlign = 'left';
@@ -138,11 +152,13 @@ export class CombatBuffsRenderer implements OverlayRenderer {
         y += 22;
 
         if (buffs.length === 0) {
+            // Empty-state message (bg - static text, not live data)
             ctx.font = '10px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = 'rgba(255,255,255,0.25)';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('No tracked buffs', canvas.width / 2, y + 10);
+            ctx.globalAlpha = 1.0;
             return;
         }
 
@@ -155,23 +171,24 @@ export class CombatBuffsRenderer implements OverlayRenderer {
             const bgAlpha = 0.08;
             const [br, bg, bb] = buff.active ? [34, 197, 94] : [239, 68, 68];
 
-            // Row background
+            // Row background + left border accent (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.fillStyle = `rgba(${br},${bg},${bb},${bgAlpha})`;
             roundRect(ctx, padX, y, w, rowH, 5);
             ctx.fill();
 
-            // Left border
             ctx.fillStyle = borderColor;
             ctx.fillRect(padX, y + 4, 2, rowH - 8);
 
-            // Name
+            // Buff name text (fg - live data, shows which buffs are tracked)
+            ctx.globalAlpha = this._fgOpacity;
             ctx.font = '12px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = buff.active ? '#86efac' : '#fca5a5';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillText(buff.name, padX + 10, y + rowH / 2);
 
-            // Timer / EXPIRED
+            // Timer or EXPIRED text (fg - live countdown / status)
             const timerStr = buff.active ? formatTime(buff.time) : 'EXPIRED';
             ctx.font = '500 13px Consolas, "SF Mono", monospace';
             ctx.fillStyle = buff.active ? '#22c55e' : '#ef4444';
@@ -181,6 +198,8 @@ export class CombatBuffsRenderer implements OverlayRenderer {
 
             y += rowH + 4;
         }
+
+        ctx.globalAlpha = 1.0;
     }
 
     // =====================================================================

@@ -31,6 +31,14 @@ const INCANTATION_COLORS: Record<string, string> = {
  * no groups are defined (for backward compatibility).
  */
 export class ModernRenderer implements OverlayRenderer {
+    // Opacity pair for the current render pass, read from state.styleOpacity
+    // at the top of each render path. bg slider fades decorative elements
+    // (panel backgrounds, section frames, borders, labels). fg slider fades
+    // live data (icons, stack indicators, bar fills, live timer/count text,
+    // active-state glows). See project_feature_opacity_sliders.md for the
+    // full classification rules.
+    private _bgOpacity: number = 1.0;
+    private _fgOpacity: number = 1.0;
 
     // =====================================================================
     // Canvas Rendering - Necromancy-specific mockup layout
@@ -41,6 +49,12 @@ export class ModernRenderer implements OverlayRenderer {
         if (!def) return;
 
         const scale = state.overlayScale || 1.0;
+
+        // Read opacity pair for the current combat style. Both the necromancy
+        // custom layout and the generic fallback consume these instance vars.
+        const op = state.styleOpacity?.[state.combatStyle] ?? { background: 1.0, foreground: 1.0 };
+        this._bgOpacity = op.background;
+        this._fgOpacity = op.foreground;
 
         // Necromancy gets the custom mockup layout; others fall back
         if (def.id === 'necromancy') {
@@ -67,7 +81,8 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background: dark purple gradient
+        // Outer panel gradient (bg)
+        ctx.globalAlpha = this._bgOpacity;
         const grad = ctx.createLinearGradient(0, 0, 0, dims.height);
         grad.addColorStop(0, 'rgba(12,8,24,0.97)');
         grad.addColorStop(1, 'rgba(8,6,18,0.98)');
@@ -75,7 +90,7 @@ export class ModernRenderer implements OverlayRenderer {
         roundRect(ctx, 0, 0, dims.width, dims.height, 6);
         ctx.fill();
 
-        // Border: purple tint
+        // Outer panel border (bg)
         ctx.strokeStyle = 'rgba(167,139,250,0.12)';
         ctx.lineWidth = 1;
         roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 6);
@@ -178,9 +193,6 @@ export class ModernRenderer implements OverlayRenderer {
         const [tr, tg, tb] = hexToRgb(themeColor);
 
         // Panel background + border
-        ctx.fillStyle = `rgba(${tr},${tg},${tb},0.04)`;
-        roundRect(ctx, x, y, w, 0.1, 4); // placeholder - we'll draw full height after measuring
-        // We need to know final height - compute it first
         const labelH = 12; // label line height
         const cols = 2;
         const cellH = 22;
@@ -189,18 +201,17 @@ export class ModernRenderer implements OverlayRenderer {
         const gridH = rows * cellH + (rows - 1) * cellGap;
         const panelH = 5 + labelH + gridH + 4; // padding-top + label + grid + padding-bottom
 
-        // Draw panel bg
+        // Panel decoration (bg): outer fill, border, and section label text
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = `rgba(${tr},${tg},${tb},0.04)`;
         roundRect(ctx, x, y, w, panelH, 4);
         ctx.fill();
 
-        // Panel border
         ctx.strokeStyle = `rgba(${tr},${tg},${tb},0.1)`;
         ctx.lineWidth = 1;
         roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
         ctx.stroke();
 
-        // Section label
         let cy = y + 5;
         ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = `rgba(${tr},${tg},${tb},0.55)`;
@@ -223,16 +234,16 @@ export class ModernRenderer implements OverlayRenderer {
             const cellY = cy + row * (cellH + cellGap);
             const [cr, cg, cb] = hexToRgb(item.color);
 
+            // Cell decoration (bg): cell background, left accent, icon box
+            ctx.globalAlpha = this._bgOpacity;
+
             if (item.isActive) {
-                // Active cell background
                 ctx.fillStyle = `rgba(${cr},${cg},${cb},0.08)`;
                 roundRect(ctx, cx, cellY, cellW, cellH, 3);
                 ctx.fill();
-                // Left accent
                 ctx.fillStyle = item.color;
                 ctx.fillRect(cx, cellY + 3, 1.5, cellH - 6);
             } else {
-                // Inactive cell
                 ctx.fillStyle = 'rgba(255,255,255,0.015)';
                 roundRect(ctx, cx, cellY, cellW, cellH, 3);
                 ctx.fill();
@@ -240,7 +251,7 @@ export class ModernRenderer implements OverlayRenderer {
                 ctx.fillRect(cx, cellY + 3, 1.5, cellH - 6);
             }
 
-            // Icon box (18x18)
+            // Icon box frame (18x18) (bg)
             const iconSize = 18;
             const iconX = cx + 4;
             const iconY = cellY + (cellH - iconSize) / 2;
@@ -262,13 +273,16 @@ export class ModernRenderer implements OverlayRenderer {
                 roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
                 ctx.stroke();
             }
+
+            // Icon image (fg - drawIcon manages its own alpha)
             this.drawIcon(ctx, item.refImage, iconX, iconY, iconSize, item.isActive, item.color);
 
             // Text to the right of icon
             const textX = iconX + iconSize + 3;
             const textMaxW = cellW - iconSize - 10;
 
-            // Name (7px)
+            // Ability name (bg - label)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.font = '7px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = item.isActive ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.18)';
             ctx.textAlign = 'left';
@@ -276,7 +290,8 @@ export class ModernRenderer implements OverlayRenderer {
             const name = this.truncateText(ctx, item.shortName, textMaxW);
             ctx.fillText(name, textX, cellY + 2);
 
-            // Timer (9px monospace)
+            // Timer text (fg - live data)
+            ctx.globalAlpha = this._fgOpacity;
             ctx.font = '500 9px Consolas, "SF Mono", monospace';
             ctx.fillStyle = item.isActive ? item.color : 'rgba(255,255,255,0.1)';
             ctx.textBaseline = 'bottom';
@@ -303,22 +318,23 @@ export class ModernRenderer implements OverlayRenderer {
         const isActive = as?.active && (as.time > 0 || bloat.type === 'enemy-debuff');
         const barH = 26;
 
-        // Bar background
+        // Bar track decoration (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(120,200,80,0.03)';
         roundRect(ctx, x, y, w, barH, 4);
         ctx.fill();
 
-        // Bar border
         ctx.strokeStyle = 'rgba(140,80,200,0.12)';
         ctx.lineWidth = 1;
         roundRect(ctx, x + 0.5, y + 0.5, w - 1, barH - 1, 4);
         ctx.stroke();
 
-        // Progress fill
+        // Progress fill (fg - live countdown data)
         if (isActive && bloat.internalDuration) {
             const progress = Math.min(1, as!.time / bloat.internalDuration);
             if (progress > 0) {
                 ctx.save();
+                ctx.globalAlpha = this._fgOpacity;
                 roundRect(ctx, x, y, w, barH, 4);
                 ctx.clip();
 
@@ -334,7 +350,8 @@ export class ModernRenderer implements OverlayRenderer {
             }
         }
 
-        // Icon (16x16) on left
+        // Icon box frame (16x16) (bg)
+        ctx.globalAlpha = this._bgOpacity;
         const iconSize = 16;
         const iconX = x + 8;
         const iconY = y + (barH - iconSize) / 2;
@@ -345,16 +362,20 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.lineWidth = 1;
         roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 3);
         ctx.stroke();
+
+        // Icon image (fg - drawIcon manages its own alpha)
         this.drawIcon(ctx, bloat.refImage, iconX, iconY, iconSize, isActive, '#8c50c8');
 
-        // "Bloat" label
+        // "Bloat" label (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.font = '500 10px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.7)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText('Bloat', iconX + iconSize + 6, y + barH / 2);
 
-        // Timer (right)
+        // Timer value (fg - live countdown)
+        ctx.globalAlpha = this._fgOpacity;
         ctx.font = '500 12px Consolas, "SF Mono", monospace';
         ctx.fillStyle = isActive ? '#8c50c8' : 'rgba(255,255,255,0.15)';
         ctx.textAlign = 'right';
@@ -398,22 +419,20 @@ export class ModernRenderer implements OverlayRenderer {
             const as = state.abilities['living_death'];
             const isActive = as?.active && as.time > 0;
 
-            // Background
+            // Slot decoration (bg): background, border, left accent, icon box
+            ctx.globalAlpha = this._bgOpacity;
             ctx.fillStyle = isActive ? 'rgba(192,132,252,0.06)' : 'rgba(255,255,255,0.015)';
             roundRect(ctx, x, y, ldW, slotH, 4);
             ctx.fill();
 
-            // Border
             ctx.strokeStyle = isActive ? 'rgba(192,132,252,0.12)' : 'rgba(255,255,255,0.04)';
             ctx.lineWidth = 1;
             roundRect(ctx, x + 0.5, y + 0.5, ldW - 1, slotH - 1, 4);
             ctx.stroke();
 
-            // Left accent (2px)
             ctx.fillStyle = isActive ? '#c084fc' : 'rgba(255,255,255,0.06)';
             ctx.fillRect(x, y + 4, 2, slotH - 8);
 
-            // Icon (30x30)
             const iconX = x + 7;
             const iconY = y + (slotH - iconSize) / 2;
             ctx.fillStyle = isActive ? 'rgba(192,132,252,0.1)' : 'rgba(255,255,255,0.02)';
@@ -423,30 +442,37 @@ export class ModernRenderer implements OverlayRenderer {
             ctx.lineWidth = 1;
             roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 4);
             ctx.stroke();
+
+            // Icon image (fg - drawIcon manages its own alpha)
             this.drawIcon(ctx, ldDef!.refImage, iconX, iconY, iconSize, isActive, '#c084fc');
 
-            // Name
+            // Name label (bg)
             const textX = iconX + iconSize + 6;
+            ctx.globalAlpha = this._bgOpacity;
             ctx.font = '8px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText('Living Death', textX, y + 6);
 
-            // Timer (large)
+            // Timer value (fg - live countdown)
+            ctx.globalAlpha = this._fgOpacity;
             ctx.font = '500 16px Consolas, "SF Mono", monospace';
             ctx.fillStyle = isActive ? '#c084fc' : 'rgba(255,255,255,0.1)';
             ctx.textBaseline = 'bottom';
             ctx.fillText(isActive ? formatTimeShort(as!.time) : '\u2014', textX, y + slotH - 5);
         }
 
-        // Death Skulls slot (permanently inactive placeholder)
+        // Death Skulls slot (currently a placeholder until action bar cooldown
+        // tracking is wired in - see abilities.ts:94)
         if (showDS) {
             const dsX = showLD ? x + ldW + gap : x;
             const dsWActual = showLD ? dsW : w;
             const as = state.abilities['death_skulls'];
             const isActive = as?.active && as.time > 0;
 
+            // Slot decoration (bg)
+            ctx.globalAlpha = this._bgOpacity;
             ctx.fillStyle = isActive ? 'rgba(167,139,250,0.04)' : 'rgba(255,255,255,0.015)';
             roundRect(ctx, dsX, y, dsWActual, slotH, 4);
             ctx.fill();
@@ -468,15 +494,21 @@ export class ModernRenderer implements OverlayRenderer {
             ctx.lineWidth = 1;
             roundRect(ctx, iconX + 0.5, iconY + 0.5, iconSize - 1, iconSize - 1, 4);
             ctx.stroke();
+
+            // Icon image (fg - drawIcon manages its own alpha)
             this.drawIcon(ctx, dsDef!.refImage, iconX, iconY, iconSize, isActive, '#a78bfa');
 
+            // Name label (bg)
             const textX = iconX + iconSize + 6;
+            ctx.globalAlpha = this._bgOpacity;
             ctx.font = '8px "Segoe UI", system-ui, sans-serif';
             ctx.fillStyle = isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.18)';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             ctx.fillText('Death Skulls', textX, y + 6);
 
+            // Timer value (fg - live data)
+            ctx.globalAlpha = this._fgOpacity;
             ctx.font = '500 16px Consolas, "SF Mono", monospace';
             ctx.fillStyle = isActive ? '#a78bfa' : 'rgba(255,255,255,0.1)';
             ctx.textBaseline = 'bottom';
@@ -543,7 +575,8 @@ export class ModernRenderer implements OverlayRenderer {
 
         const panelH = 52;
 
-        // Panel background
+        // Panel decoration (bg): background, border, section label
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(78,205,196,0.04)';
         roundRect(ctx, x, y, w, panelH, 4);
         ctx.fill();
@@ -552,7 +585,6 @@ export class ModernRenderer implements OverlayRenderer {
         roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
         ctx.stroke();
 
-        // Label
         ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(78,205,196,0.6)';
         ctx.textAlign = 'center';
@@ -561,7 +593,8 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.fillText('RESIDUAL SOULS', x + w / 2, y + 4);
         ctx.letterSpacing = '0px';
 
-        // Soul icons row
+        // Soul indicators (fg - live stack data; filled vs unfilled state is
+        // multiplied by _fgOpacity via save/restore below)
         const iconSize = 14;
         const iconGap = 3;
         const totalIconsW = maxStacks * iconSize + (maxStacks - 1) * iconGap;
@@ -575,27 +608,29 @@ export class ModernRenderer implements OverlayRenderer {
 
             if (soulImg) {
                 if (filled) {
-                    // Active: full opacity + glow
+                    // Active soul: full glow scaled by fgOpacity
                     ctx.save();
                     ctx.shadowColor = 'rgba(78,205,196,0.5)';
                     ctx.shadowBlur = 4;
-                    ctx.globalAlpha = 1.0;
+                    ctx.globalAlpha = this._fgOpacity;
                     ctx.drawImage(soulImg, ix, iconY, iconSize, iconSize);
                     ctx.restore();
                 } else {
-                    // Inactive: greyed out
+                    // Inactive soul: existing greyed-out alpha multiplied by fgOpacity
                     ctx.save();
                     if (typeof ctx.filter === 'string') {
                         ctx.filter = 'grayscale(1) brightness(0.3)';
-                        ctx.globalAlpha = 0.8;
+                        ctx.globalAlpha = 0.8 * this._fgOpacity;
                     } else {
-                        ctx.globalAlpha = 0.2;
+                        ctx.globalAlpha = 0.2 * this._fgOpacity;
                     }
                     ctx.drawImage(soulImg, ix, iconY, iconSize, iconSize);
                     ctx.restore();
                 }
             } else {
-                // Fallback: colored circles
+                // Fallback: colored circles (still fg)
+                ctx.save();
+                ctx.globalAlpha = (filled ? 1.0 : 0.4) * this._fgOpacity;
                 ctx.beginPath();
                 ctx.arc(ix + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
                 if (filled) {
@@ -611,12 +646,14 @@ export class ModernRenderer implements OverlayRenderer {
                     ctx.stroke();
                 }
                 ctx.shadowBlur = 0;
+                ctx.restore();
             }
 
             ix += iconSize + iconGap;
         }
 
-        // Count text
+        // Count text (fg - live data)
+        ctx.globalAlpha = this._fgOpacity;
         ctx.font = '500 11px Consolas, "SF Mono", monospace';
         ctx.fillStyle = stacks > 0 ? '#4ecdc4' : 'rgba(255,255,255,0.2)';
         ctx.textAlign = 'center';
@@ -639,7 +676,8 @@ export class ModernRenderer implements OverlayRenderer {
 
         const panelH = 52;
 
-        // Panel background
+        // Panel decoration (bg): background, border, section label
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(34,197,94,0.03)';
         roundRect(ctx, x, y, w, panelH, 4);
         ctx.fill();
@@ -648,7 +686,6 @@ export class ModernRenderer implements OverlayRenderer {
         roundRect(ctx, x + 0.5, y + 0.5, w - 1, panelH - 1, 4);
         ctx.stroke();
 
-        // Label
         ctx.font = '500 7px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(34,197,94,0.55)';
         ctx.textAlign = 'center';
@@ -657,18 +694,16 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.fillText('NECROSIS', x + w / 2, y + 4);
         ctx.letterSpacing = '0px';
 
-        // Skull icons in pairs with a split gap
+        // Skull indicators (fg - live stack data) arranged in pairs with split gap
         const skullW = 10;
         const skullH = 12;
         const pairInternalGap = 1;
         const pairGap = 3;
         const splitGapPx = 6;
 
-        // Number of pairs
         const numPairs = Math.ceil(maxStacks / 2);
         const splitPairIdx = splitAt / 2; // pair index where the split gap goes (after this index)
 
-        // Total width of all pairs + gaps + split
         const pairW = skullW * 2 + pairInternalGap;
         let totalW = numPairs * pairW + (numPairs - 1) * pairGap + splitGapPx;
         let startX = x + (w - totalW) / 2;
@@ -686,25 +721,29 @@ export class ModernRenderer implements OverlayRenderer {
 
                 if (necrosisImg) {
                     if (filled) {
+                        // Active skull: full glow scaled by fgOpacity
                         ctx.save();
                         ctx.shadowColor = 'rgba(34,197,94,0.4)';
                         ctx.shadowBlur = 2;
-                        ctx.globalAlpha = 1.0;
+                        ctx.globalAlpha = this._fgOpacity;
                         ctx.drawImage(necrosisImg, sx, skullY, skullW, skullH);
                         ctx.restore();
                     } else {
+                        // Inactive skull: greyed-out alpha multiplied by fgOpacity
                         ctx.save();
                         if (typeof ctx.filter === 'string') {
                             ctx.filter = 'grayscale(1) brightness(0.3)';
-                            ctx.globalAlpha = 0.8;
+                            ctx.globalAlpha = 0.8 * this._fgOpacity;
                         } else {
-                            ctx.globalAlpha = 0.2;
+                            ctx.globalAlpha = 0.2 * this._fgOpacity;
                         }
                         ctx.drawImage(necrosisImg, sx, skullY, skullW, skullH);
                         ctx.restore();
                     }
                 } else {
-                    // Fallback: simple rectangles
+                    // Fallback: simple rectangles (still fg)
+                    ctx.save();
+                    ctx.globalAlpha = (filled ? 1.0 : 0.4) * this._fgOpacity;
                     if (filled) {
                         ctx.fillStyle = '#22c55e';
                         ctx.shadowColor = 'rgba(34,197,94,0.4)';
@@ -716,6 +755,7 @@ export class ModernRenderer implements OverlayRenderer {
                     roundRect(ctx, sx, skullY, skullW, skullH, 2);
                     ctx.fill();
                     ctx.shadowBlur = 0;
+                    ctx.restore();
                 }
 
                 skullIdx++;
@@ -724,7 +764,8 @@ export class ModernRenderer implements OverlayRenderer {
             startX += pairW + pairGap;
         }
 
-        // Count text
+        // Count text (fg - live data)
+        ctx.globalAlpha = this._fgOpacity;
         ctx.font = '500 11px Consolas, "SF Mono", monospace';
         ctx.fillStyle = stacks > 0 ? '#22c55e' : 'rgba(255,255,255,0.2)';
         ctx.textAlign = 'center';
@@ -753,12 +794,14 @@ export class ModernRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background
+        // Outer panel background + border (bg). Generic fallback path applies
+        // bgOpacity to structural chrome here; per-group draws below handle
+        // their own bg/fg transitions where needed.
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(8, 6, 16, 225)';
         roundRect(ctx, 0, 0, dims.width, dims.height, 8);
         ctx.fill();
 
-        // Border
         ctx.strokeStyle = 'rgba(255, 255, 255, 20)';
         ctx.lineWidth = 1;
         roundRect(ctx, 0.5, 0.5, dims.width - 1, dims.height - 1, 8);
@@ -776,6 +819,7 @@ export class ModernRenderer implements OverlayRenderer {
             y = this.drawFallbackLayout(ctx, def, state, padX, y, contentW);
         }
 
+        ctx.globalAlpha = 1.0;
         ctx.restore();
     }
 
@@ -1208,8 +1252,15 @@ export class ModernRenderer implements OverlayRenderer {
         return y + rowH + 4;
     }
 
-    /** Draw an ability icon - uses display image (HTMLImageElement) first,
-     *  falls back to detection ref (ImageData -> offscreen canvas), then colored dot. */
+    /**
+     * Draw an ability icon. Always foreground content; multiplies the per-style
+     * foreground slider into the existing active/inactive alpha via save/restore.
+     * Outer context alpha is preserved on return.
+     *
+     * Uses display image (HTMLImageElement) first, falls back to detection ref
+     * (ImageData converted to offscreen canvas), then a colored dot as final
+     * fallback.
+     */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,
@@ -1218,6 +1269,8 @@ export class ModernRenderer implements OverlayRenderer {
         isActive: boolean,
         color: string,
     ): void {
+        const fgAlpha = (isActive ? 1.0 : 0.25) * this._fgOpacity;
+
         if (refImageKey) {
             // Prefer display image (clean wiki icon, HTMLImageElement - works reliably in Alt1)
             const displayImages = getDisplayImages();
@@ -1225,7 +1278,7 @@ export class ModernRenderer implements OverlayRenderer {
             if (displayImg) {
                 try {
                     ctx.save();
-                    if (!isActive) ctx.globalAlpha = 0.25;
+                    ctx.globalAlpha = fgAlpha;
                     ctx.drawImage(displayImg, 1, 1, displayImg.width - 2, displayImg.height - 2,
                         x + 1, y + 1, size - 2, size - 2);
                     ctx.restore();
@@ -1248,7 +1301,7 @@ export class ModernRenderer implements OverlayRenderer {
                     if (tmpCtx) {
                         tmpCtx.putImageData(refImg, 0, 0);
                         ctx.save();
-                        if (!isActive) ctx.globalAlpha = 0.25;
+                        ctx.globalAlpha = fgAlpha;
                         ctx.drawImage(tmpCanvas, 1, 1, refImg.width - 2, refImg.height - 2,
                             x + 1, y + 1, size - 2, size - 2);
                         ctx.restore();
@@ -1259,11 +1312,14 @@ export class ModernRenderer implements OverlayRenderer {
                 }
             }
         }
-        // Fallback: colored dot
+        // Fallback: colored dot (still foreground)
+        ctx.save();
+        ctx.globalAlpha = fgAlpha;
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, Math.min(size / 4, 5), 0, Math.PI * 2);
         ctx.fillStyle = isActive ? color : 'rgba(255,255,255,0.15)';
         ctx.fill();
+        ctx.restore();
     }
 
     /** Truncate text to fit within maxWidth */

@@ -152,6 +152,7 @@ const REF_PROMISES: Record<string, Promise<ImageData>> = {
  */
 const DISPLAY_IMAGE_PATHS: Record<string, string> = {
     'living-death': 'refs/combat/necromancy/living-death.png',
+    'death-skulls': 'refs/combat/necromancy/death-skulls.png',
     'darkness': 'refs/combat/necromancy/darkness.png',
     'threads-of-fate': 'refs/combat/necromancy/threads-of-fate.png',
     'split-soul-necro': 'refs/combat/necromancy/split-soul-necro.png',

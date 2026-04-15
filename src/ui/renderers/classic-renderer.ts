@@ -13,6 +13,11 @@ const GAUGE_EXCLUDED_IDS = new Set(['death_spark', 'death_essence_buff', 'death_
  * Progress bars for stack abilities. Familiar RS3 aesthetic.
  */
 export class ClassicRenderer implements OverlayRenderer {
+    // Opacity pair for the current render pass. See CompactRenderer for the
+    // convention: bg slider fades decorative elements (panel bg, borders,
+    // labels), fg slider fades live data (icons, bar fills, live text).
+    private _bgOpacity: number = 1.0;
+    private _fgOpacity: number = 1.0;
 
     // =====================================================================
     // HTML Rendering
@@ -161,12 +166,18 @@ export class ClassicRenderer implements OverlayRenderer {
         ctx.save();
         ctx.scale(scale, scale);
 
-        // Background gradient (approximation - canvas can't do CSS gradients easily)
+        // Read opacity pair for this render pass from the per-combat-style map
+        const op = state.styleOpacity?.[state.combatStyle] ?? { background: 1.0, foreground: 1.0 };
+        this._bgOpacity = op.background;
+        this._fgOpacity = op.foreground;
+
+        // Background gradient (approximation - canvas can't do CSS gradients easily) (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.fillStyle = 'rgba(18, 12, 30, 235)'; // 0.92 * 255
         roundRect(ctx, 0, 0, dims.width, dims.height, 4);
         ctx.fill();
 
-        // Border
+        // Border (bg)
         const [sr, sg, sb] = hexToRgb(def.color);
         ctx.strokeStyle = `rgba(${sr},${sg},${sb},0.4)`;
         ctx.lineWidth = 1;
@@ -279,22 +290,24 @@ export class ClassicRenderer implements OverlayRenderer {
             for (const conjure of conjureAbilities) {
                 const active = state.abilities[conjure.id]?.active || false;
 
-                // Pill background
+                // Pill background (bg)
+                ctx.globalAlpha = this._bgOpacity;
                 ctx.fillStyle = active ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.03)';
                 roundRect(ctx, cx, y, pillW, pillH, 3);
                 ctx.fill();
 
-                // Pill border
+                // Pill border (bg)
                 ctx.strokeStyle = active ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)';
                 ctx.lineWidth = 1;
                 roundRect(ctx, cx + 0.5, y + 0.5, pillW - 1, pillH - 1, 3);
                 ctx.stroke();
 
-                // Conjure icon or fallback dot
+                // Conjure icon (fg - drawIcon handles fgOpacity internally via save/restore)
                 const iconSize = 14;
                 this.drawIcon(ctx, conjure.refImage, cx + 3, y + (pillH - iconSize) / 2, iconSize, active, '#22c55e');
 
-                // Name
+                // Name label (bg)
+                ctx.globalAlpha = this._bgOpacity;
                 ctx.font = '9px "Segoe UI", system-ui, sans-serif';
                 ctx.fillStyle = active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)';
                 ctx.textAlign = 'left';
@@ -318,8 +331,10 @@ export class ClassicRenderer implements OverlayRenderer {
     ): void {
         const active = state?.active || false;
         const [r, g, b] = hexToRgb(ability.color);
+        const activeMul = active ? 1.0 : 0.4;
 
-        ctx.globalAlpha = active ? 1.0 : 0.4;
+        // Cell decoration (bg): icon background, border, timer overlay rect
+        ctx.globalAlpha = activeMul * this._bgOpacity;
 
         // Icon background
         ctx.fillStyle = 'rgba(30, 20, 50, 204)'; // 0.8 * 255
@@ -334,17 +349,19 @@ export class ClassicRenderer implements OverlayRenderer {
         roundRect(ctx, x + 0.5, y + 0.5, size - 1, size - 1, 2);
         ctx.stroke();
 
-        // Icon image or fallback dot
+        // Icon image (fg - drawIcon manages its own alpha via save/restore)
         this.drawIcon(ctx, ability.refImage, x, y, size, active, ability.color);
 
-        // Timer overlay at bottom
+        // Timer overlay at bottom: dark band (bg) + live text (fg)
         if (active) {
             const overlayH = 11;
+            ctx.globalAlpha = activeMul * this._bgOpacity;
             ctx.fillStyle = 'rgba(0, 0, 0, 179)'; // 0.7 * 255
             ctx.fillRect(x, y + size - overlayH, size, overlayH);
 
             const text = formatTimeShort(state?.time || 0);
 
+            ctx.globalAlpha = activeMul * this._fgOpacity;
             ctx.font = '500 9px Consolas, "SF Mono", monospace';
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
@@ -352,7 +369,8 @@ export class ClassicRenderer implements OverlayRenderer {
             ctx.fillText(text, x + size / 2, y + size - overlayH / 2);
         }
 
-        // Label below
+        // Label below (bg)
+        ctx.globalAlpha = activeMul * this._bgOpacity;
         ctx.font = '9px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.textAlign = 'center';
@@ -374,32 +392,39 @@ export class ClassicRenderer implements OverlayRenderer {
         const pct = Math.min(stacks / max, 1);
         const [r, g, b] = hexToRgb(ability.color);
 
-        // Label + count header
+        // Label header (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.font = '10px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(ability.shortName, x, y);
 
+        // Stack count text (fg - live data)
+        ctx.globalAlpha = this._fgOpacity;
         ctx.font = '500 10px Consolas, "SF Mono", monospace';
         ctx.fillStyle = stacks > 0 ? ability.color : 'rgba(255,255,255,0.3)';
         ctx.textAlign = 'right';
         ctx.fillText(`${stacks} / ${max}`, x + w, y);
 
-        // Progress bar track
+        // Progress bar track (bg)
+        ctx.globalAlpha = this._bgOpacity;
         const barY = y + 14;
         const barH = 6;
         ctx.fillStyle = 'rgba(255,255,255,0.08)';
         roundRect(ctx, x, barY, w, barH, 3);
         ctx.fill();
 
-        // Progress bar fill
+        // Progress bar fill (fg - live data)
         if (pct > 0) {
+            ctx.globalAlpha = this._fgOpacity;
             const fillW = Math.max(w * pct, barH); // min width = height for rounded ends
             ctx.fillStyle = ability.color;
             roundRect(ctx, x, barY, fillW, barH, 3);
             ctx.fill();
         }
+
+        ctx.globalAlpha = 1.0;
     }
 
     private drawBloatBar(
@@ -415,43 +440,54 @@ export class ClassicRenderer implements OverlayRenderer {
         const pct = active ? Math.min(time / maxTime, 1) : 0;
         const [r, g, b] = hexToRgb(ability.color);
 
-        // Label + timer header
+        // Icon (fg - drawIcon manages its own alpha multiplication)
+        const iconSize = 14;
+        this.drawIcon(ctx, ability.refImage, x, y, iconSize, active, ability.color);
+
+        // Label text (bg)
+        ctx.globalAlpha = this._bgOpacity;
         ctx.font = '10px "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-
-        // Icon + label
-        const iconSize = 14;
-        this.drawIcon(ctx, ability.refImage, x, y, iconSize, active, ability.color);
         ctx.fillText(ability.shortName, x + iconSize + 4, y);
 
+        // Timer value text (fg - live countdown)
+        ctx.globalAlpha = this._fgOpacity;
         ctx.font = '500 10px Consolas, "SF Mono", monospace';
         ctx.fillStyle = active ? ability.color : 'rgba(255,255,255,0.3)';
         ctx.textAlign = 'right';
         ctx.fillText(active ? formatTimeShort(time) : '\u2014', x + w, y);
 
-        // Progress bar track
+        // Progress bar track (bg)
+        ctx.globalAlpha = this._bgOpacity;
         const barY = y + 14;
         const barH = 6;
         ctx.fillStyle = 'rgba(255,255,255,0.08)';
         roundRect(ctx, x, barY, w, barH, 3);
         ctx.fill();
 
-        // Progress bar fill
+        // Progress bar fill (fg - live countdown data)
         if (pct > 0) {
+            ctx.globalAlpha = this._fgOpacity;
             const fillW = Math.max(w * pct, barH);
             ctx.fillStyle = ability.color;
             roundRect(ctx, x, barY, fillW, barH, 3);
             ctx.fill();
         }
+
+        ctx.globalAlpha = 1.0;
     }
 
     // =====================================================================
     // Icon drawing helper
     // =====================================================================
 
-    /** Draw an ability/conjure icon - uses display image first, falls back to ref image, then colored dot. */
+    /**
+     * Draw an ability/conjure icon. Always foreground content; multiplies
+     * the per-style foreground slider into the existing active/inactive alpha
+     * via save/restore. Outer context alpha is preserved on return.
+     */
     private drawIcon(
         ctx: CanvasRenderingContext2D,
         refImageKey: string | undefined,
@@ -460,13 +496,15 @@ export class ClassicRenderer implements OverlayRenderer {
         isActive: boolean,
         color: string,
     ): void {
+        const fgAlpha = (isActive ? 1.0 : 0.25) * this._fgOpacity;
+
         if (refImageKey) {
             const displayImages = getDisplayImages();
             const displayImg = displayImages[refImageKey];
             if (displayImg) {
                 try {
                     ctx.save();
-                    if (!isActive) ctx.globalAlpha = 0.25;
+                    ctx.globalAlpha = fgAlpha;
                     ctx.drawImage(displayImg, x, y, size, size);
                     ctx.restore();
                     return;
@@ -484,7 +522,7 @@ export class ClassicRenderer implements OverlayRenderer {
                     if (tmpCtx) {
                         tmpCtx.putImageData(refImg, 0, 0);
                         ctx.save();
-                        if (!isActive) ctx.globalAlpha = 0.25;
+                        ctx.globalAlpha = fgAlpha;
                         ctx.drawImage(tmpCanvas, x, y, size, size);
                         ctx.restore();
                         return;
@@ -492,11 +530,14 @@ export class ClassicRenderer implements OverlayRenderer {
                 } catch (e) { /* fallback */ }
             }
         }
-        // Fallback: colored dot
+        // Fallback: colored dot (still foreground)
+        ctx.save();
+        ctx.globalAlpha = fgAlpha;
         ctx.beginPath();
         ctx.arc(x + size / 2, y + size / 2, Math.min(size / 4, 5), 0, Math.PI * 2);
         ctx.fillStyle = isActive ? color : 'rgba(255,255,255,0.15)';
         ctx.fill();
+        ctx.restore();
     }
 
     // =====================================================================

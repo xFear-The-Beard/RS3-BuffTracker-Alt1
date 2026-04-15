@@ -29,6 +29,15 @@ export interface PanelState {
     y: number;
 }
 
+/** Background/foreground transparency pair for a single renderer pass. */
+export interface OpacityPair {
+    background: number;
+    foreground: number;
+}
+
+/** Per-combat-style transparency settings for the combat gauge. */
+export type StyleOpacityMap = Record<CombatStyle, OpacityPair>;
+
 /**
  * Full app state.
  */
@@ -48,6 +57,10 @@ export interface AppState {
     noSoulboundLantern: boolean;
     /** Overlay scale factor (0.5 to 2.0, default 1.0) */
     overlayScale: number;
+    /** Per-combat-style transparency pairs (background/foreground) for the gauge overlay. Clamped 0.05-1.0. */
+    styleOpacity: StyleOpacityMap;
+    /** Transparency pair for the combat buffs panel (not per-style, shared). Clamped 0.05-1.0. */
+    combatBuffsOpacity: OpacityPair;
     /** Ability IDs hidden from the gauge */
     hiddenAbilities: string[];
     /** Set when a saved calibration is older than 7 days. Banner dismissed for the current session by setCalibrationStaleDismissed. */
@@ -145,6 +158,61 @@ function loadCombatBuffTracking(): Record<string, BuffTrackMode> {
     return {};
 }
 
+// Minimum opacity is 5% so the gauge can never accidentally become fully
+// invisible via the sliders. The settings panel is always reachable from
+// the app window to restore visibility if needed.
+const OPACITY_MIN = 0.05;
+const OPACITY_MAX = 1.0;
+
+function clampOpacity(v: number): number {
+    if (!Number.isFinite(v)) return 1.0;
+    return Math.max(OPACITY_MIN, Math.min(OPACITY_MAX, v));
+}
+
+function defaultStyleOpacity(): StyleOpacityMap {
+    return {
+        necromancy: { background: 1.0, foreground: 1.0 },
+        magic:      { background: 1.0, foreground: 1.0 },
+        ranged:     { background: 1.0, foreground: 1.0 },
+        melee:      { background: 1.0, foreground: 1.0 },
+    };
+}
+
+function loadStyleOpacity(): StyleOpacityMap {
+    const result = defaultStyleOpacity();
+    try {
+        const raw = loadUserSetting('styleOpacity');
+        if (!raw) return result;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return result;
+        for (const style of ['necromancy', 'magic', 'ranged', 'melee'] as CombatStyle[]) {
+            const saved = parsed[style];
+            if (saved && typeof saved === 'object') {
+                result[style] = {
+                    background: clampOpacity(typeof saved.background === 'number' ? saved.background : 1.0),
+                    foreground: clampOpacity(typeof saved.foreground === 'number' ? saved.foreground : 1.0),
+                };
+            }
+        }
+    } catch { /* fallback to defaults */ }
+    return result;
+}
+
+function loadCombatBuffsOpacity(): OpacityPair {
+    const defaults: OpacityPair = { background: 1.0, foreground: 1.0 };
+    try {
+        const raw = loadUserSetting('combatBuffsOpacity');
+        if (!raw) return defaults;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return defaults;
+        return {
+            background: clampOpacity(typeof parsed.background === 'number' ? parsed.background : 1.0),
+            foreground: clampOpacity(typeof parsed.foreground === 'number' ? parsed.foreground : 1.0),
+        };
+    } catch { /* fallback to defaults */ }
+    return defaults;
+}
+
 /**
  * Lightweight reactive store. No dependencies needed for this.
  */
@@ -168,6 +236,8 @@ class Store {
             combatBuffTracking: loadCombatBuffTracking(),
             noSoulboundLantern: loadUserSetting('noSoulboundLantern') === 'true',
             overlayScale: parseFloat(loadUserSetting('overlayScale') || '1.0') || 1.0,
+            styleOpacity: loadStyleOpacity(),
+            combatBuffsOpacity: loadCombatBuffsOpacity(),
             hiddenAbilities: JSON.parse(loadUserSetting('hiddenAbilities') || '[]'),
             calibrationStale: false,
             calibrationStaleDismissed: false,
@@ -346,6 +416,45 @@ class Store {
             saveUserSetting('overlayScale', String(clamped));
             this.notify();
         }
+    }
+
+    /**
+     * Update one layer (background or foreground) of the per-style gauge
+     * transparency. Clamped 0.05-1.0 at the store layer so malformed saved
+     * state or slider bypass can't fully hide the gauge.
+     */
+    setStyleOpacityLayer(style: CombatStyle, layer: 'background' | 'foreground', value: number): void {
+        const clamped = clampOpacity(value);
+        const current = this.state.styleOpacity[style];
+        if (current[layer] === clamped) return;
+        const updated: OpacityPair = { ...current, [layer]: clamped };
+        this.state = {
+            ...this.state,
+            styleOpacity: {
+                ...this.state.styleOpacity,
+                [style]: updated,
+            },
+        };
+        saveUserSetting('styleOpacity', JSON.stringify(this.state.styleOpacity));
+        this.notify();
+    }
+
+    /**
+     * Update one layer of the combat buffs panel transparency. Same clamp
+     * rules as setStyleOpacityLayer.
+     */
+    setCombatBuffsOpacityLayer(layer: 'background' | 'foreground', value: number): void {
+        const clamped = clampOpacity(value);
+        if (this.state.combatBuffsOpacity[layer] === clamped) return;
+        this.state = {
+            ...this.state,
+            combatBuffsOpacity: {
+                ...this.state.combatBuffsOpacity,
+                [layer]: clamped,
+            },
+        };
+        saveUserSetting('combatBuffsOpacity', JSON.stringify(this.state.combatBuffsOpacity));
+        this.notify();
     }
 
     toggleAbilityVisibility(id: string, visible: boolean): void {
