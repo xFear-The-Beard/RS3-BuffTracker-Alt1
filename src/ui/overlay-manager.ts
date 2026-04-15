@@ -97,21 +97,20 @@ export class OverlayManager {
         this.renderTick();
     }
 
-    /**
-     * Stop the overlay render loop and clear all overlay groups.
-     */
+    /** Stop the render loop and explicitly clear all overlay groups. */
     stop(): void {
         if (this.renderInterval) {
             clearInterval(this.renderInterval);
             this.renderInterval = null;
         }
 
-        // Clear all overlay groups
         if (typeof alt1 !== 'undefined') {
             for (const panel of this.panels) {
                 try {
                     alt1.overLaySetGroup(panel.groupName);
+                    alt1.overLayFreezeGroup(panel.groupName);
                     alt1.overLayClearGroup(panel.groupName);
+                    alt1.overLayRefreshGroup(panel.groupName);
                 } catch {
                     // Ignore errors during cleanup
                 }

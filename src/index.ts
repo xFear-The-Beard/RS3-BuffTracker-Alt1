@@ -1743,6 +1743,10 @@ function init(): void {
         // Initialize overlay manager
         overlayManager = new OverlayManager();
 
+        // Clear overlays on close so they don't linger for Alt1's frozen-overlay timer.
+        window.addEventListener('beforeunload', () => { if (overlayManager) overlayManager.stop(); });
+        window.addEventListener('pagehide', () => { if (overlayManager) overlayManager.stop(); });
+
         // Subscribe to state changes - only update overlay (no HTML panel rendering)
         store.subscribe(() => {
             // Overlay manager handles rendering on its own interval,
