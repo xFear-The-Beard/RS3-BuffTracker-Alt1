@@ -24,6 +24,7 @@ Tracks necromancy abilities, conjures, incantations, stacking buffs, enemy debuf
 - RuneScape 3 (NXT client)
 - Buff bar icon size: Small (in RS3 Settings > Interfaces > Buff Bar)
 - Game and UI Scale: 100% recommended. Other scales work too - the detector handles roughly 60% to 260% of default. If detection won't find your buff bar, try changing your RS3 in-game UI Settings > Display > Interface Scale and click Detect again.
+- As of now, make sure your buff icons are set to the smallest size. Still working on scaling, but small should track buffs/debuffs the best.
 
 ## Installation
 
